@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+  "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta name="viewport" content="width=320; user-scalable=no" />
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>PhoneGap</title>
+	  <link rel="stylesheet" href="master.css" type="text/css" media="screen" title="no title" charset="utf-8">
+	  <script type="text/javascript" charset="utf-8" src="phonegap.js"></script>
+	  <script src="http://maps.google.com/maps?file=api&v=2&key=ABQIAAAASWkdhwcFZHCle_XL8gNI0hQQPTIxowtQGbc0PVHZZ3XLXr5GBhRKV3t_-63J9ZAJ2bYu3zsQdR9N-A&sensor=true" type="text/javascript"></script>
+	  <script type="text/javascript" src="yql_js_widget.js"></script>
+	  <script type="text/javascript" charset="utf-8">
+    // Beer Me JS code.
+    
+ 	// Create our droid and beer marker icon
+    var droidIcon = new GIcon(G_DEFAULT_ICON);
+    droidIcon.image = "images/androidmarker.png";
+    droidIcon.iconSize = new GSize(50,58);
+    var droidMarkerOptions = { icon:droidIcon };
+    var beerIcon = new GIcon(G_DEFAULT_ICON);
+    beerIcon.image = "images/beericon.png";
+    beerIcon.iconSize = new GSize(40,45);
+    var beerMarkerOptions = { icon:beerIcon };
+	var myMarkerInfo = document.createElement("div");
+	myMarkerInfo.innerHTML = 'Your position';
+    var map = null;
+    var myMarker = new GMarker(new GLatLng(50,50), droidMarkerOptions);
+    var geocoder = null;
+    GEvent.addListener(myMarker, "click", function() {
+    	var myHtml = "<b>Your position</b>";
+    	myMarker.openInfoWindowHtml(myHtml);
+    });
+    function initialize() {
+    	map = new GMap2(document.getElementById("map_canvas"));
+    	map.addControl(new GLargeMapControl);
+    	geocoder = new GClientGeocoder();
+    	updateLocation();
+    }
+    function disableRefresh() {
+        var btn = document.getElementById('refreshBtn');
+        btn.disabled = true;
+        btn.innerHTML = 'Refreshing...';
+    }
+    function enableRefresh() {
+    	var btn = document.getElementById('refreshBtn');
+        btn.disabled = false;
+        btn.innerHTML = 'Refresh location';
+    }
+    function updateLocation() {
+        disableRefresh();
+    	var suc = function(p) {
+      		var point = new GLatLng(p.latitude, p.longitude);
+      		// Draw my position.
+      		myMarker.setLatLng(point);
+      		map.addOverlay(myMarker);
+      		// Set map center.
+      		map.setCenter(point, 10);
+      		// Call for YQL data.
+      		beerUpdate(p.latitude, p.longitude);
+      		enableRefresh();
+		};
+		var die = function() {
+			document.getElementById('refreshBtn').innerHTML = 'GPS is unavailable';
+  			alert('GPS Failure! Please enable GPS to be able to use Beer Me.');
+		};
+  		navigator.geolocation.getCurrentPosition(suc,die);
+    }
+    function beerUpdate(lat,lng) {
+        // Get city name of current place.
+        geocoder.getLocations(new GLatLng(lat,lng),cb_GeoCoder);
+        // Get data from BeerMapping.
+    	var BeerXHR = new XMLHttpRequest();
+    	if ( typeof BeerXHR.overrideMimeType != 'undefined') { BeerXHR.overrideMimeType('text/xml'); }
+    	var url = 'http://beermapping.com/webservice/locquery/33aac0960ce1fd70bd6e07191af96bd5/' + encodeURIComponent(path);
+    	// Get data from YQL.
+    	var config = {'debug' : true};
+    	var format = '{Title}';
+    	var yqlQuery = "select * from local.search where radius=35 and latitude=" + lat + " and longitude=" + lng + " and query='beer'";
+    	var insertEl = 'widgetContainer';
+    	yqlWidget.push(yqlQuery, config, format, insertEl, map);
+    	yqlWidget.render();
+    }
+    function cb_GeoCoder(response) {
+    	if (!response || response.Status.code != 200) {
+    		alert("Error retrieving data from BeerMapping.com, status code:" + response.Status.code);
+    	} else {
+      		var place = response.Placemark[0];
+      		  
+    	}
+    }
+	  </script>
+  </head>
+  <body onload="initialize()" onunload="GUnload()" id="stage" class="theme">
+  <div id="map_cont" style="width:100%;padding:2px;height:254px;">
+  	<div id="map_canvas" style="width:100%;height:100%;z-index:1;"></div>
+  </div>
+  <button id="refreshBtn" onclick="updateLocation();" style="width:100%;height:20px;">Refresh location</button>
+  <div id="widgetContainer" style="width:100%;height:120px;overflow-y:scroll;"></div>
+  </body>
+</html>
