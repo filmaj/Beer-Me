@@ -10,6 +10,20 @@
 	  <script src="http://maps.google.com/maps?file=api&v=2&key=ABQIAAAASWkdhwcFZHCle_XL8gNI0hQQPTIxowtQGbc0PVHZZ3XLXr5GBhRKV3t_-63J9ZAJ2bYu3zsQdR9N-A&sensor=true" type="text/javascript"></script>
 	  <script type="text/javascript" src="yql_js_widget.js"></script>
 	  <script type="text/javascript" charset="utf-8">
+	// Geolocation code shamelessly stolen from Movable Type scripts: http://www.movable-type.co.uk/scripts/latlong.html
+	LatLon.distCosineLaw = function(lat1, lon1, lat2, lon2) {
+		var R = 6371; // earth's mean radius in km
+		var d = Math.acos(Math.sin(lat1.toRad())*Math.sin(lat2.toRad()) +
+			Math.cos(lat1.toRad())*Math.cos(lat2.toRad())*Math.cos((lon2-lon1).toRad())) * R;
+		return d;
+	};
+	function LatLon(lat, lon) {
+		this.lat = lat;
+		this.lon = lon;
+	}
+	Number.prototype.toRad = function() {  // convert degrees to radians
+		return this * Math.PI / 180;
+	};
     // Beer Me JS code.
     
  	// Create our droid and beer marker icon
@@ -49,14 +63,14 @@
     function updateLocation() {
         disableRefresh();
     	var suc = function(p) {
-      		var point = new GLatLng(p.latitude, p.longitude);
+      		var point = new GLatLng(p.coords.latitude, p.coords.longitude);
       		// Draw my position.
       		myMarker.setLatLng(point);
       		map.addOverlay(myMarker);
       		// Set map center.
       		map.setCenter(point, 10);
       		// Call for YQL data.
-      		beerUpdate(p.latitude, p.longitude);
+      		beerUpdate(p.coords.latitude, p.coords.longitude);
       		enableRefresh();
 		};
 		var die = function() {
@@ -65,13 +79,34 @@
 		};
   		navigator.geolocation.getCurrentPosition(suc,die);
     }
-    function beerUpdate(lat,lng) {
-        // Get city name of current place.
-        geocoder.getLocations(new GLatLng(lat,lng),cb_GeoCoder);
-        // Get data from BeerMapping.
-    	var BeerXHR = new XMLHttpRequest();
-    	if ( typeof BeerXHR.overrideMimeType != 'undefined') { BeerXHR.overrideMimeType('text/xml'); }
-    	var url = 'http://beermapping.com/webservice/locquery/33aac0960ce1fd70bd6e07191af96bd5/' + encodeURIComponent(path);
+    function getBeerFromBeerMapping(lat,lng) {
+        var cb_GeoCoder = function(response) {
+        	// Calback for retrieving geographic information about current locaiton.
+            // TODO: Handle status code 602: Unknown area.
+        	if (!response || response.Status.code != 200) {
+        		alert("Error retrieving data from BeerMapping.com, status code:" + response.Status.code);
+        	} else {
+          		var place = response.Placemark[0];
+          		var city = place.AddressDetails.Country.AdministrativeArea.SubAdministrativeArea.SubAdministrativeAreaName;
+          		var state = place.AddressDetails.Country.AdministrativeArea.AdministrativeAreaName; 
+          		var url = "http://beermapping.com/webservice/locstate/33aac0960ce1fd70bd6e07191af96bd5/" + state;
+          		var BeerXHR = new XMLHttpRequest();
+          		// And this is the BeerMapping callback.
+            	var cb_BeerMapping = function() {
+                	if (BeerXHR.readyState == 4 && BeerXHR.status == 200) {
+                    	// Grab response and parse!
+                    	var response = BeerXHR.responseXML.documentElement;
+                	}	
+            	}
+          		BeerXHR.onreadystatechange = cb_BeerMapping;
+          		BeerXHR.open("GET", url, true);
+          		BeerXHR.send(null);
+        	}
+        }
+    	// Get city name of current place.
+    	geocoder.getLocations(new GLatLng(lat,lng),cb_GeoCoder);
+    }
+    function getBeerFromYQL(lat,lng) {
     	// Get data from YQL.
     	var config = {'debug' : true};
     	var format = '{Title}';
@@ -80,18 +115,14 @@
     	yqlWidget.push(yqlQuery, config, format, insertEl, map);
     	yqlWidget.render();
     }
-    function cb_GeoCoder(response) {
-    	if (!response || response.Status.code != 200) {
-    		alert("Error retrieving data from BeerMapping.com, status code:" + response.Status.code);
-    	} else {
-      		var place = response.Placemark[0];
-      		  
-    	}
+    function beerUpdate(lat,lng) {
+    	getBeerFromYQL(lat,lng);
+    	getBeerFromBeerMapping(lat,lng);
     }
 	  </script>
   </head>
-  <body onload="initialize()" onunload="GUnload()" id="stage" class="theme">
-  <div id="map_cont" style="width:100%;padding:2px;height:254px;">
+  <body onload="setTimeout('initialize()',2500)" onunload="GUnload()" id="stage" class="theme">
+  <div id="map_cont" style="width:100%;padding:2px;height:279px;">
   	<div id="map_canvas" style="width:100%;height:100%;z-index:1;"></div>
   </div>
   <button id="refreshBtn" onclick="updateLocation();" style="width:100%;height:20px;">Refresh location</button>
