@@ -24,22 +24,20 @@
             BeerMe.map.clearOverlays();
             BeerMe.disableRefresh();
         	var suc = function(p) {
-				alert("2");
-          		var point = new GLatLng(p.latitude, p.longitude);
+          		var point = new GLatLng(p.coords.latitude, p.coords.longitude);
           		// Draw my position.
           		BeerMe.myMarker.setLatLng(point);
           		BeerMe.map.addOverlay(BeerMe.myMarker);
           		// Set map center.
           		BeerMe.map.setCenter(point, 12);
           		// Call for YQL data.
-          		BeerMe.beerUpdate(p.latitude, p.longitude);
+          		BeerMe.beerUpdate(p.coords.latitude, p.coords.longitude);
           		BeerMe.enableRefresh();
     		};
     		var die = function() {
     			document.getElementById('refreshBtn').innerHTML = 'GPS is unavailable';
       			alert('GPS Failure! Please enable GPS to be able to use Beer Me.');
     		};
-			alert(navigator.geolocation.getCurrentPosition);
       		navigator.geolocation.getCurrentPosition(suc,die);
       		//var p = {coords:{latitude:49.3,longitude:-123.4}};
       		//suc(p);
