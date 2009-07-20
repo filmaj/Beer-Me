@@ -87,7 +87,7 @@ yqlWidget = function() {
 	*/
 	var parseYQLResults = function(results){
 		var createBeerMarker = function(node) {
-			var beerMarker = new GMarker(new GLatLng(node.Latitude,node.Longitude), beerMarkerOptions);
+			var beerMarker = new GMarker(new GLatLng(node.Latitude,node.Longitude), BeerMe.beerMarkerOptions);
 		    GEvent.addListener(beerMarker, "click", function() {
 		    	var myHtml = "<b>" + node.Title + "</b><br/>" + node.Address + "<br/>" + node.City;
 		    	beerMarker.openInfoWindowHtml(myHtml);
@@ -107,7 +107,7 @@ yqlWidget = function() {
 			//multiple results - array
 			var Titles = [];
 			for(var i = 0; i < firstChild.length; i++){
-			    map.addOverlay(createBeerMarker(firstChild[i]));
+			    BeerMe.map.addOverlay(createBeerMarker(firstChild[i]));
 			}
 		} else {
 			//single result - object
@@ -116,7 +116,7 @@ yqlWidget = function() {
 		    	var myHtml = "<b>" + firstChild[i].Title + "</b>";
 		    	beerMarker.openInfoWindowHtml(myHtml);
 		    });
-		    map.addOverlay(beerMarker);
+		    BeerMe.map.addOverlay(beerMarker);
 		}
 		yqlWidget.render();
 	}
