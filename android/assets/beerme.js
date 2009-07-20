@@ -29,7 +29,7 @@
           		BeerMe.myMarker.setLatLng(point);
           		BeerMe.map.addOverlay(BeerMe.myMarker);
           		// Set map center.
-          		BeerMe.map.setCenter(point, 10);
+          		BeerMe.map.setCenter(point, 12);
           		// Call for YQL data.
           		BeerMe.beerUpdate(p.coords.latitude, p.coords.longitude);
           		BeerMe.enableRefresh();
@@ -46,7 +46,15 @@
         	function createBMBeerMarker(node) {
     			var beerMarker = new GMarker(new GLatLng(0,0), BeerMe.beerMarkerOptions);
     		    GEvent.addListener(beerMarker, "click", function() {
-    		    	var myHtml = "<b>" + node.Title + "</b><br/>" + node.Street + "<br/>" + node.City + ", " + node.State + "<br/>" + "BeerMapping location!"; 
+    		    	var myHtml = "<b>" + node.Title + "</b><br/>";
+    		    	myHtml += node.Street + "<br/>";
+    		    	myHtml += node.City + ", " + node.State + "<br/>";
+    		    	if (node.Phone.length > 0) {
+    		    		myHtml += "Phone: " + node.Phone + "<br/>";
+    		    	}
+    		    	if (node.URL.length > 0) {
+    		    		myHtml += '<a href="' + node.URL + '" target="_blank">Link to BeerMapping Reviews</a>';
+    		    	}
     		    	beerMarker.openInfoWindowHtml(myHtml);
     		    });
     		    return beerMarker;
@@ -83,10 +91,16 @@
 		                            		var city = locations[i].getElementsByTagName('city')[0].childNodes[0].nodeValue;
 		                            		var street = locations[i].getElementsByTagName('street')[0].childNodes[0].nodeValue;
 		                            		var state = locations[i].getElementsByTagName('state')[0].childNodes[0].nodeValue;
+		                            		var phone = locations[i].getElementsByTagName('phone');
+		                            		if (phone.length > 0) { phone = phone[0].childNodes[0].nodeValue; } else { phone = ""; }
+		                            		var URL = locations[i].getElementsByTagName('reviewlink');
+		                            		if (URL.length > 0) { URL = URL[0].childNodes[0].nodeValue; } else { URL = ""; }
 		                            		if (city != null && street != null && state != null) {
 		                                		// Callback for getting lat/lng coords of BeerMapping locations.
 		                                		var node = {
 		                                        		"Title":name,
+		                                        		"Phone":phone,
+		                                        		"URL":URL,
 		                                        		"Street":street,
 		                                        		"City":city,
 		                                        		"State":state
