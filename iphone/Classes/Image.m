@@ -15,7 +15,6 @@
 @implementation Image
 
 @synthesize window;
-@synthesize picker;
 
 // TODO Move to Image.m
 - (void)imagePickerController:(UIImagePickerController *)thePicker didFinishPickingImage:(UIImage *)theImage editingInfo:(NSDictionary *)editingInfo
@@ -60,7 +59,6 @@
 		receivedData=[[NSMutableData data] retain];
 		NSString *sourceSt = [[NSString alloc] initWithBytes:[receivedData bytes] length:[receivedData length] encoding:NSUTF8StringEncoding];
 		NSLog([@"photo: connection sucess" stringByAppendingString:sourceSt]);
-		[sourceSt release];
 		
 	} else {
 		NSLog(@"photo: upload failed!");
@@ -125,8 +123,7 @@
     // release the connection, and the data object
     [conn release];
     [receivedData release];
-	[jsCallBack release];
-	[aStr release];
+	
 }
 
 

@@ -11,28 +11,16 @@
 
 @implementation PhoneGapViewController
 
+
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation) interfaceOrientation 
-{
-    if (autoRotate == YES) {
-        return YES;
-    } else {
-        if ([rotateOrientation isEqualToString:@"portrait"]) {
-            return (interfaceOrientation == UIInterfaceOrientationPortrait ||
-                    interfaceOrientation == UIInterfaceOrientationPortraitUpsideDown);
-        } else if ([rotateOrientation isEqualToString:@"landscape"]) {
-            return (interfaceOrientation == UIInterfaceOrientationLandscapeLeft ||
-                    interfaceOrientation == UIInterfaceOrientationLandscapeRight);
-        } else {
-            return NO;
-        }
-    }
+{ 
+    return NO; 
 }
 
-/**
- Called by UIKit when the device starts to rotate to a new orientation.  This fires the \c setOrientation
- method on the Orientation object in JavaScript.  Look at the JavaScript documentation for more information.
- */
+
 - (void)willRotateToInterfaceOrientation: (UIInterfaceOrientation)toInterfaceOrientation duration: (NSTimeInterval)duration {
+	NSString * jsCallBack = nil;
+	NSLog(@"IN Rotate");
 	double i = 0;
 	
 	switch (toInterfaceOrientation){
@@ -49,15 +37,12 @@
 			i = -90;
 			break;
 	}
-	[webView stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"navigator.orientation.setOrientation(%f);", i]];
-}
 
-- (void) setAutoRotate:(BOOL) shouldRotate {
-    autoRotate = shouldRotate;
-}
-
-- (void) setRotateOrientation:(NSString*) orientation {
-    rotateOrientation = orientation;
+	jsCallBack = [[NSString alloc] initWithFormat:@"var _orientation=%f;", i];
+	[webView stringByEvaluatingJavaScriptFromString:jsCallBack];
+	
+	[jsCallBack release];
+	
 }
 
 @end

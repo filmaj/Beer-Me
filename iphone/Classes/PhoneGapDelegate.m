@@ -6,198 +6,157 @@
 
 @synthesize window;
 @synthesize viewController;
-@synthesize activityView;
-@synthesize commandObjects;
-@synthesize settings;
 
-- (id) init
-{
-    self = [super init];
-    if (self != nil) {
-        commandObjects = [[NSMutableDictionary alloc] initWithCapacity:4];
-    }
-    return self; 
+@synthesize imagePickerController;
+
+void alert(NSString *message) {
+//    UIAlertView *openURLAlert = [[UIAlertView alloc] initWithTitle:@"Alert" message:message delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+//    [openURLAlert show];
+//    [openURLAlert release];
 }
 
-/**
- Returns an instance of a PhoneGapCommand object, based on its name.  If one exists already, it is returned.
- */
--(id) getCommandInstance:(NSString*)className
-{
-    id obj = [commandObjects objectForKey:className];
-    if (!obj) {
-        // attempt to load the settings for this command class
-        NSDictionary* classSettings;
-        classSettings = [settings objectForKey:className];
-
-        if (classSettings)
-            obj = [[NSClassFromString(className) alloc] initWithWebView:webView settings:classSettings];
-        else
-            obj = [[NSClassFromString(className) alloc] initWithWebView:webView];
-        
-        [commandObjects setObject:obj forKey:className];
-		[obj release];
-    }
-    return obj;
-}
-
-/**
+/*
+ * applicationDidFinishLaunching 
  * This is main kick off after the app inits, the views and Settings are setup here.
  */
-- (void)applicationDidFinishLaunching:(UIApplication *)application
-{	
-	/*
-	 * PhoneGap.plist
-	 *
-	 * This block of code navigates to the PhoneGap.plist in the Config Group and reads the XML into an Hash (Dictionary)
-	 *
-	 */
-    NSDictionary *temp = [PhoneGapDelegate getBundlePlist:@"PhoneGap"];
-    settings = [[NSDictionary alloc] initWithDictionary:temp];
-    
-    NSNumber *detectNumber         = [settings objectForKey:@"DetectPhoneNumber"];
-    NSNumber *useLocation          = [settings objectForKey:@"UseLocation"];
-    NSNumber *useAccelerometer     = [settings objectForKey:@"EnableAcceleration"];
-    NSNumber *autoRotate           = [settings objectForKey:@"AutoRotate"];
-    NSString *startOrientation     = [settings objectForKey:@"StartOrientation"];
-    NSString *rotateOrientation    = [settings objectForKey:@"RotateOrientation"];
-    NSString *topActivityIndicator = [settings objectForKey:@"TopActivityIndicator"];
-	
+
+
+- (void)applicationDidFinishLaunching:(UIApplication *)application {
+
 	/*
 	 * Fire up the GPS Service right away as it takes a moment for data to come back.
 	 */
-    if ([useLocation boolValue]) {
-        [[self getCommandInstance:@"Location"] start:nil withDict:nil];
-    }
-
+	[[Location sharedInstance].locationManager startUpdatingLocation];
+	
 	webView.delegate = self;
+  
+	// Set up the image picker controller and add it to the view
+	imagePickerController = [[UIImagePickerController alloc] init];
+	imagePickerController.delegate = self;
+	imagePickerController.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+	imagePickerController.view.hidden = YES;
+	
+	[[UIAccelerometer sharedAccelerometer] setUpdateInterval:1.0/40.0];
+	[[UIAccelerometer sharedAccelerometer] setDelegate:self];
 
-	if ([useAccelerometer boolValue]) {
-        [[UIAccelerometer sharedAccelerometer] setUpdateInterval:1.0/40.0];
-        [[UIAccelerometer sharedAccelerometer] setDelegate:self];
-    }
+	[window addSubview:viewController.view]; 
+	
+	NSString *errorDesc = nil;
+	
+	
+	/*
+	 * Settings.plist
+	 *
+	 * This block of code navigates to the Settings.plist in the Config Group and reads the XML into an Hash (Dictionary)
+	 *
+	 */
+	NSPropertyListFormat format;
+	NSString *plistPath = [[NSBundle mainBundle] pathForResource:@"Settings" ofType:@"plist"];
+	NSData *plistXML = [[NSFileManager defaultManager] contentsAtPath:plistPath];
+	NSDictionary *temp = (NSDictionary *)[NSPropertyListSerialization
+										  propertyListFromData:plistXML
+										  mutabilityOption:NSPropertyListMutableContainersAndLeaves			  
+										  format:&format errorDescription:&errorDesc];
+		
+	NSString *offline = [temp objectForKey:@"Offline"];
+	NSString *url = [temp objectForKey:@"Callback"];
+	int *detectNumber = [temp objectForKey:@"DetectPhoneNumber"];
 
-	[window addSubview:viewController.view];
 
+
+	
+	/*
+	 * We want to test the offline to see if this app should start in offline mode or online mode.
+	 *
+	 *   0 - Offline
+	 *   1 - Online
+	 *
+	 *		In Offline mode the index.html file is loaded from the www directly and serves as the entry point into the application
+	 *		In Online mode the starting point is a external FQDN, usually your server.
+	 */
+	if ([offline isEqualToString:@"0"]) {
+		appURL = [[NSURL URLWithString:url] retain];
+	} else {		
+		NSBundle * thisBundle = [NSBundle bundleForClass:[self class]];
+		appURL = [[NSURL fileURLWithPath:[thisBundle pathForResource:@"index" ofType:@"html" inDirectory:@"www"]] retain];		
+	}
+
+	
 	/*
 	 * webView
 	 * This is where we define the inital instance of the browser (WebKit) and give it a starting url/file.
 	 */
-    NSURL *appURL        = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"index" ofType:@"html" inDirectory:@"www"]];
-    NSURLRequest *appReq = [NSURLRequest requestWithURL:appURL cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:20.0];
-	[webView loadRequest:appReq];
-
-	webView.detectsPhoneNumbers = [detectNumber boolValue];
-
+	[webView loadRequest:[NSURLRequest 
+						  requestWithURL:appURL 
+						  cachePolicy:NSURLRequestUseProtocolCachePolicy
+						  timeoutInterval:20.0
+						  ]];
+	
+	
+	/*
+	 * detectNumber - If we want to Automagicly convery phone numbers to links - Set in Settings.plist
+	 * Value should be BOOL (YES|NO)
+	 *
+	 * For whatever reason this quit working
+	 */
+	webView.detectsPhoneNumbers=detectNumber;
+	
+	
 	/*
 	 * imageView - is the Default loading screen, it stay up until the app and UIWebView (WebKit) has completly loaded.
 	 * You can change this image by swapping out the Default.png file within the resource folder.
 	 */
-	UIImage* image = [[UIImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Default" ofType:@"png"]];
-	imageView = [[UIImageView alloc] initWithImage:image];
-	[image release];
-	
-    imageView.tag = 1;
+	imageView = [[UIImageView alloc] initWithImage:[[UIImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Default" ofType:@"png"]]];
 	[window addSubview:imageView];
-	[imageView release];
+  
 	
-    /*
-     * autoRotate - If you want your phone to automatically rotate its display when the phone is rotated
-     * Value should be BOOL (YES|NO)
-     */
-    [viewController setAutoRotate:[autoRotate boolValue]];
-
-    /*
-     * startOrientation - This option dictates what the starting orientation will be of the application 
-     * Value should be one of: portrait, portraitUpsideDown, landscapeLeft, landscapeRight
-     */
-    orientationType = UIInterfaceOrientationPortrait;
-    if ([startOrientation isEqualToString:@"portrait"]) {
-        orientationType = UIInterfaceOrientationPortrait;
-    } else if ([startOrientation isEqualToString:@"portraitUpsideDown"]) {
-        orientationType = UIInterfaceOrientationPortraitUpsideDown;
-    } else if ([startOrientation isEqualToString:@"landscapeLeft"]) {
-        orientationType = UIInterfaceOrientationLandscapeLeft;
-    } else if ([startOrientation isEqualToString:@"landscapeRight"]) {
-        orientationType = UIInterfaceOrientationLandscapeRight;
-    }
-    [[UIApplication sharedApplication] setStatusBarOrientation:orientationType animated:NO];
-
-    /*
-     * rotateOrientation - This option is only enabled when AutoRotate is enabled.  If the phone is still rotated
-     * when AutoRotate is disabled, this will control what orientations will be rotated to.  If you wish your app to
-     * only use landscape or portrait orientations, change the value in PhoneGap.plist to indicate that.
-     * Value should be one of: any, portrait, landscape
-     */
-    [viewController setRotateOrientation:rotateOrientation];
-    
+	/*
+	 * These are the setting for the top Status/Battery Bar.
+	 *
+	 *	 UIStatusBarStyleBlackOpaque
+	 *	 UIStatusBarStyleBlackTranslucent
+	 *	 UIStatusBarStyleDefault - Default
+	 *
+	 */
+	[application setStatusBarStyle:UIStatusBarStyleBlackOpaque animated:NO];
+	
+	
 	/*
 	 * The Activity View is the top spinning throbber in the status/battery bar. We init it with the default Grey Style.
 	 *
-	 *	 whiteLarge = UIActivityIndicatorViewStyleWhiteLarge
-	 *	 white      = UIActivityIndicatorViewStyleWhite
-	 *	 gray       = UIActivityIndicatorViewStyleGray
+	 *	 UIActivityIndicatorViewStyleWhiteLarge
+	 *	 UIActivityIndicatorViewStyleWhite
+	 *	 UIActivityIndicatorViewStyleGray
 	 *
 	 */
-    UIActivityIndicatorViewStyle topActivityIndicatorStyle = UIActivityIndicatorViewStyleGray;
-    if ([topActivityIndicator isEqualToString:@"whiteLarge"]) {
-        topActivityIndicatorStyle = UIActivityIndicatorViewStyleWhiteLarge;
-    } else if ([topActivityIndicator isEqualToString:@"white"]) {
-        topActivityIndicatorStyle = UIActivityIndicatorViewStyleWhite;
-    } else if ([topActivityIndicator isEqualToString:@"gray"]) {
-        topActivityIndicatorStyle = UIActivityIndicatorViewStyleGray;
-    }
-    activityView = [[[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:topActivityIndicatorStyle] retain];
-    activityView.tag = 2;
-    [window addSubview:activityView];
-    [activityView startAnimating];
-
+	activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+	[window addSubview:activityView];
+	[activityView startAnimating];
+	
+	
+	/*
+	 * If you don't want your app to have a status bar, just uncomment this.
+	 */
+	//[[UIApplication sharedApplication] setStatusBarHidden:YES animated:NO];		
+	
+	
 	[window makeKeyAndVisible];
+
 }
 
 
-/**
- When web application loads Add stuff to the DOM, mainly the user-defined settings from the Settings.plist file, and
- the device's data such as device ID, platform version, etc.
+/*
+ *	When web application loads Add stuff to the DOM (HTML 5)
  */
 - (void)webViewDidStartLoad:(UIWebView *)theWebView {
-	NSDictionary *deviceProperties = [[self getCommandInstance:@"Device"] getDeviceProperties];
-    NSMutableString *result = [[NSMutableString alloc] initWithFormat:@"DeviceInfo = %@;", [deviceProperties JSONFragment]];
-    
-    /* Settings.plist
-	 * Read the optional Settings.plist file and push these user-defined settings down into the web application.
-	 * This can be useful for supplying build-time configuration variables down to the app to change its behaviour,
-     * such as specifying Full / Lite version, or localization (English vs German, for instance).
-	 */
-    NSDictionary *temp = [PhoneGapDelegate getBundlePlist:@"Settings"];
-    if ([temp respondsToSelector:@selector(JSONFragment)]) {
-        [result appendFormat:@"\nwindow.Settings = %@;", [temp JSONFragment]];
-    }
 
-    NSLog(@"Device initialization: %@", result);
-    [theWebView stringByEvaluatingJavaScriptFromString:result];
-	[result release];
+	/*
+	 * This is the Device.plaftorm information
+	 */	
+	[theWebView stringByEvaluatingJavaScriptFromString:[[Device alloc] init]];
+
 }
 
-/**
- Returns the contents of the named plist bundle, loaded as a dictionary object
- */
-+ (NSDictionary*)getBundlePlist:(NSString *)plistName
-{
-    NSString *errorDesc = nil;
-    NSPropertyListFormat format;
-    NSString *plistPath = [[NSBundle mainBundle] pathForResource:plistName ofType:@"plist"];
-    NSData *plistXML = [[NSFileManager defaultManager] contentsAtPath:plistPath];
-    NSDictionary *temp = (NSDictionary *)[NSPropertyListSerialization
-                                          propertyListFromData:plistXML
-                                          mutabilityOption:NSPropertyListMutableContainersAndLeaves			  
-                                          format:&format errorDescription:&errorDesc];
-    return temp;
-}
-
-/**
- Called when the webview finishes loading.  This stops the activity view and closes the imageview
- */
 - (void)webViewDidFinishLoad:(UIWebView *)theWebView {
 	/*
 	 * Hide the Top Activity THROBER in the Battery Bar
@@ -212,142 +171,306 @@
 }
 
 
-/**
- * Fail Loading With Error
+/*
+ * - Fail Loading With Error
  * Error - If the webpage failed to load display an error with the reson.
  *
  */
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error {
-    NSLog(@"Failed to load webpage with error: %@", [error localizedDescription]);
-	/*
-    if ([error code] != NSURLErrorCancelled)
-		alert([error localizedDescription]);
-     */
+	if ([error code] != NSURLErrorCancelled)
+		alert(error.localizedDescription);
 }
 
 
-/**
+/*
  * Start Loading Request
  * This is where most of the magic happens... We take the request(s) and process the response.
  * From here we can re direct links and other protocalls to different internal methods.
  *
  */
-- (BOOL)webView:(UIWebView *)theWebView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
-{
-	NSURL *url = [request URL];
+- (BOOL)webView:(UIWebView *)theWebView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType {
+	
+	NSURL * url = [request URL];
 
-    /*
-     * Get Command and Options From URL
-     * We are looking for URLS that match gap://<Class>.<command>/[<arguments>][?<dictionary>]
-     * We have to strip off the leading slash for the options.
-     */
-     if ([[url scheme] isEqualToString:@"gap"]) {
-        //NSLog(@"%@", [url description]); // Uncomment to watch gap: commands being issued
-        /*
-         * Note: We have to go through the following contortions because NSURL "helpfully" unescapes
-         *       certain characters, such as "/" from their hex encoding for us.  This normally wouldn't
-         *       be a problem, unless your argument has a "/" in it, such as a file path.
+	// Check to see if the URL request is for the App URL.
+	// If it is not, then launch using Safari
+	// TODO: There was a suggestion to check this against a whitelist of urls, this would be a good place to do that.
+	NSString * urlHost = [url host];
+	NSString * appHost = [appURL host];
+	NSRange range = [urlHost rangeOfString:appHost options:NSCaseInsensitiveSearch];
+
+	if ([[url scheme] isEqualToString:@"gap"]) {
+
+		NSString * path  =  [url path];
+		/*
+		 * Get Command and Options From URL
+		 * We are looking for URLS that match gap://<command>[/<options>]
+		 * We have to strip off the leading slah for the options.
 		 */
 		NSString * command = [url host];
-
-        NSString * fullUrl = [url description];
-        int prefixLength  = [command length] + 7; // "gap://" plus the leading "/"
-        int qsLength = [[url query] length];
-        int pathLength = [fullUrl length] - prefixLength;
-        if (qsLength > 0)
-            pathLength = pathLength - qsLength - 1;
-        NSString *path = [fullUrl substringWithRange:NSMakeRange(prefixLength, pathLength)];
-        
-        // Array of arguments
-        NSMutableArray * arguments = [NSMutableArray arrayWithArray:[path componentsSeparatedByString:@"/"]];
-        int i, arguments_count = [arguments count];
-        for (i = 0; i < arguments_count; i++) {
-            [arguments replaceObjectAtIndex:i withObject:[(NSString *)[arguments objectAtIndex:i]
-                                                          stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
-        }
-        //NSLog(@"Arguments: %@", arguments);
-
-        NSMutableDictionary * options = [NSMutableDictionary dictionaryWithCapacity:1];
-        NSArray * options_parts = [NSArray arrayWithArray:[[url query] componentsSeparatedByString:@"&"]];
-        int options_count = [options_parts count];
-        for (i = 0; i < options_count; i++) {
-            NSArray  *option_part = [[options_parts objectAtIndex:i] componentsSeparatedByString:@"="];
-            NSString *name  = [(NSString *)[option_part objectAtIndex:0] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-            NSString *value = [(NSString *)[option_part objectAtIndex:1] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-            [options setObject:value forKey:name];
-        }
-        //NSLog(@"Options: %@", options);
-        
-		// Tell the JS code that we've gotten this command, and we're ready for another
-        [theWebView stringByEvaluatingJavaScriptFromString:@"PhoneGap.queue.ready = true;"];
 		
-		// Check to see if we are provided a class:method style command.
-        NSArray* components = [command componentsSeparatedByString:@"."];
-        if (components.count == 2)
-        {
-            NSString* className = [components objectAtIndex:0];
-            NSString* methodName = [components objectAtIndex:1];
-            
-            // Fetch an instance of this class
-            PhoneGapCommand* obj = [self getCommandInstance:className];
-            
-            // construct the fill method name to ammend the second argument.
-            NSString* fullMethodName = [[NSString alloc] initWithFormat:@"%@:withDict:", methodName];
-            if ([obj respondsToSelector:NSSelectorFromString(fullMethodName)])
-            {
-                [obj performSelector:NSSelectorFromString(fullMethodName) withObject:arguments withObject:options];
-            }
-            else
-            {
-                // There's no method to call, so throw an error.
-                NSLog(@"Class method '%@' not defined in class '%@'", fullMethodName, className);
-                [NSException raise:NSInternalInconsistencyException format:@"Class method '%@' not defined against class '%@'.", fullMethodName, className];
-            }
-            [fullMethodName release];
-        }
+		NSString * options =  [path substringWithRange:NSMakeRange(1, [path length] - 1)];
+
+		NSString * jsCallBack = nil;
+		
+		if([command isEqualToString:@"getloc"]){
+			jsCallBack = [[Location sharedInstance] getPosition];
+
+			[theWebView stringByEvaluatingJavaScriptFromString:jsCallBack];
+			[jsCallBack release];
+			
+		} else if([command isEqualToString:@"vibrate"]){
+			/*
+			 * Make the device vibrate, this is now part of the notifier object.
+			 */
+			Vibrate *vibration = [[Vibrate alloc] init];
+			[vibration vibrate];
+			[vibration release];
+			
+		} else if([command isEqualToString:@"openmap"]) {
+			
+			NSString *mapurl = [@"maps:" stringByAppendingString:options];
+			
+			[[UIApplication sharedApplication] openURL:[NSURL URLWithString:mapurl]];
+			
+		} else if([command isEqualToString:@"getphoto"]){
+		
+//			// added/modified by urbian.org - g.mueller @urbian.org
+//			
+//			NSUInteger imageSource;
+//
+//			//set upload url
+//			photoUploadUrl = [parts objectAtIndex:3];
+//			[photoUploadUrl retain];
+//			
+//			NSLog([@"photo-url: " stringByAppendingString:photoUploadUrl]);
+//			
+//			//which image source
+//			if([(NSString *)[parts objectAtIndex:2] isEqualToString:@"fromCamera"]){
+//				imageSource = UIImagePickerControllerSourceTypeCamera;
+//			} else if([(NSString *)[parts objectAtIndex:2] isEqualToString:@"fromLibrary"]){
+//				imageSource = UIImagePickerControllerSourceTypePhotoLibrary;  
+//			} else {
+//				NSLog(@"photo: no Source type set");
+//				return NO;
+//			}
+//			
+//			//check if source is available
+//			if([UIImagePickerController isSourceTypeAvailable:imageSource])
+//			{
+//				picker = [[UIImagePickerController alloc]init];
+//				picker.sourceType = imageSource;
+//				picker.allowsImageEditing = YES;
+//				picker.delegate = self;
+//				
+//				[viewController presentModalViewController:picker animated:YES];
+//				
+//			} else {
+//				NSLog(@"photo: source not available!");
+//				return NO;
+//			}
+//			
+//			webView.hidden = YES;
+			
+			NSLog(@"photo dialog open now!");
+		} else if([command isEqualToString:@"getContacts"]) {				
+			
+			contacts = [[Contacts alloc] init];
+			jsCallBack = [contacts getContacts];
+			NSLog(@"%@",jsCallBack);
+			[theWebView stringByEvaluatingJavaScriptFromString:jsCallBack];
+
+			[contacts release];
+		
+		} else if ([command isEqualToString:@"playSound"]) {
+
+			NSBundle * mainBundle = [NSBundle mainBundle];
+			NSArray *soundFile = [options componentsSeparatedByString:@"."];
+			
+			NSString *file = (NSString *)[soundFile objectAtIndex:0];
+			NSString *ext = (NSString *)[soundFile objectAtIndex:1];
+			NSLog(file);
+			sound = [[Sound alloc] initWithContentsOfFile:[mainBundle pathForResource:file ofType:ext]];
+			[sound play];
+		}
+		
+		
 		return NO;
-	}
-    
-    /*
-     * If a URL is being loaded that's a local file URL, just load it internally
-     */
-    else if ([url isFileURL])
-    {
-        //NSLog(@"File URL %@", [url description]);
-        return YES;
-    }
-    
-    /*
-     * We don't have a PhoneGap or local file request, load it in the main Safari browser.
-     */
-    else
-    {
-        //NSLog(@"Unknown URL %@", [url description]);
-        [[UIApplication sharedApplication] openURL:url];
-        return NO;
+	} else {
+		
+		/*
+		 * We don't have a PhoneGap request, it could be file or something else
+		 */
+		if (range.location == NSNotFound) {
+			[[UIApplication sharedApplication] openURL:url];
+		}
 	}
 	
 	return YES;
 }
+	
 
 
-/**
- * Sends Accel Data back to the Device.
+/*
+ * accelerometer - Sends Accel Data back to the Device.
  */
 - (void) accelerometer:(UIAccelerometer *)accelerometer didAccelerate:(UIAcceleration *)acceleration {
 	NSString * jsCallBack = nil;
 	jsCallBack = [[NSString alloc] initWithFormat:@"var _accel={x:%f,y:%f,z:%f};", acceleration.x, acceleration.y, acceleration.z];
 	[webView stringByEvaluatingJavaScriptFromString:jsCallBack];
-    [jsCallBack release];
 }
 
-- (void)dealloc
+
+// TODO Move to Image.m
+/*
+- (void)imagePickerController:(UIImagePickerController *)thePicker didFinishPickingImage:(UIImage *)theImage editingInfo:(NSDictionary *)editingInfo
 {
-    [commandObjects release];
+	
+	//modified by urbian.org - g.mueller @urbian.org
+	
+    NSLog(@"photo: picked image");
+	
+	NSData * imageData = UIImageJPEGRepresentation(theImage, 0.75);
+	
+	NSString *urlString = [@"http://" stringByAppendingString:photoUploadUrl]; // upload the photo to this url
+	
+	NSMutableURLRequest *request = [[[NSMutableURLRequest alloc] init] autorelease];
+	[request setURL:[NSURL URLWithString:urlString]];
+	[request setHTTPMethod:@"POST"];
+	
+	// ---------
+	//Add the header info
+	NSString *stringBoundary = [NSString stringWithString:@"0xKhTmLbOuNdArY"];
+	NSString *contentType = [NSString stringWithFormat:@"multipart/form-data; boundary=%@",stringBoundary];
+	[request addValue:contentType forHTTPHeaderField: @"Content-Type"];
+	
+	//create the body
+	NSMutableData *postBody = [NSMutableData data];
+	[postBody appendData:[[NSString stringWithFormat:@"--%@\r\n",stringBoundary] dataUsingEncoding:NSUTF8StringEncoding]];
+	
+	//add data field and file data
+	[postBody appendData:[[NSString stringWithString:@"Content-Disposition: form-data; name=\"photo_0\"; filename=\"photo\"\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
+	[postBody appendData:[[NSString stringWithString:@"Content-Type: application/octet-stream\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
+	
+	[postBody appendData:[NSData dataWithData:imageData]];
+	[postBody appendData:[[NSString stringWithFormat:@"\r\n--%@--\r\n",stringBoundary] dataUsingEncoding:NSUTF8StringEncoding]];
+	
+	// ---------
+	[request setHTTPBody:postBody];
+	
+	//NSURLConnection *
+	conn=[[NSURLConnection alloc] initWithRequest:request delegate:self];
+	
+	if(conn) {    
+		receivedData=[[NSMutableData data] retain];
+		NSString *sourceSt = [[NSString alloc] initWithBytes:[receivedData bytes] length:[receivedData length] encoding:NSUTF8StringEncoding];
+		NSLog([@"photo: connection sucess" stringByAppendingString:sourceSt]);
+		
+	} else {
+		NSLog(@"photo: upload failed!");
+	}
+	
+	[[thePicker parentViewController] dismissModalViewControllerAnimated:YES];
+	
+	webView.hidden = NO;
+	[window bringSubviewToFront:webView];
+	
+}
+
+
+// TODO Move to Image.m
+- (void)imagePickerControllerDidCancel:(UIImagePickerController *)thePicker
+{
+	// Dismiss the image selection and close the program
+	[[thePicker parentViewController] dismissModalViewControllerAnimated:YES];
+	
+	//added by urbian - the webapp should know when the user canceled
+	NSString * jsCallBack = nil;
+	
+	jsCallBack = [[NSString alloc] initWithFormat:@"gotPhoto('CANCEL');", lastUploadedPhoto];
+	[webView stringByEvaluatingJavaScriptFromString:jsCallBack];  
+	[jsCallBack release];
+	
+	// Hide the imagePicker and bring the web page back into focus
+	NSLog(@"Photo Cancel Request");
+	webView.hidden = NO;
+	[window bringSubviewToFront:webView];
+}
+
+
+// TODO Move to Image.m
+- (void)connectionDidFinishLoading:(NSURLConnection *)connection {
+	
+	NSLog(@"photo: upload finished!");
+	
+	//added by urbian.org - g.mueller
+	NSString *aStr = [[NSString alloc] initWithData:receivedData encoding:NSUTF8StringEncoding];
+	
+	//upload.php should return "filename=<filename>"
+	NSLog(aStr);
+	NSArray * parts = [aStr componentsSeparatedByString:@"="];
+	//set filename
+	lastUploadedPhoto = (NSString *)[parts objectAtIndex:1];
+	
+	//now the callback: return lastUploadedPhoto
+	
+	NSString * jsCallBack = nil;
+	
+	if(lastUploadedPhoto == nil) lastUploadedPhoto = @"ERROR";
+	
+	jsCallBack = [[NSString alloc] initWithFormat:@"gotPhoto('%@');", lastUploadedPhoto];
+	
+	[webView stringByEvaluatingJavaScriptFromString:jsCallBack];
+	
+	NSLog(@"Succeeded! Received %d bytes of data",[receivedData length]);
+	NSLog(jsCallBack);
+	
+    // release the connection, and the data object
+    [conn release];
+    [receivedData release];
+	
+#if TARGET_IPHONE_SIMULATOR
+    alert(@"Did finish loading image!");
+#endif
+}
+
+
+// TODO Move to Image.m
+-(void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *) response {
+	
+	//added by urbian.org
+	NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+	NSLog(@"HTTP Status Code: %i", [httpResponse statusCode]);
+	
+	[receivedData setLength:0];
+}
+
+- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
+{
+    // append the new data to the receivedData
+    // receivedData is declared as a method instance elsewhere
+    [receivedData appendData:data];
+    NSLog(@"photo: progress");
+}
+
+
+// TODO Move to Image.m
+- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
+    NSLog([@"photo: upload failed! " stringByAppendingString:[error description]]);
+    
+#if TARGET_IPHONE_SIMULATOR
+    alert(@"Error while uploading image!");
+#endif
+}
+*/
+- (void)dealloc {
+	[appURL release];
 	[imageView release];
 	[viewController release];
-    [activityView release];
 	[window release];
+	[imagePickerController release];
+	[appURL release];
+  [sound release];
 	[super dealloc];
 }
 
