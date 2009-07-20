@@ -25,103 +25,154 @@
 		return this * Math.PI / 180;
 	};
     // Beer Me JS code.
-    
- 	// Create our droid and beer marker icon
-    var droidIcon = new GIcon(G_DEFAULT_ICON);
-    droidIcon.image = "images/androidmarker.png";
-    droidIcon.iconSize = new GSize(50,58);
-    var droidMarkerOptions = { icon:droidIcon };
-    var beerIcon = new GIcon(G_DEFAULT_ICON);
-    beerIcon.image = "images/beericon.png";
-    beerIcon.iconSize = new GSize(40,45);
-    var beerMarkerOptions = { icon:beerIcon };
-	var myMarkerInfo = document.createElement("div");
-	myMarkerInfo.innerHTML = 'Your position';
-    var map = null;
-    var myMarker = new GMarker(new GLatLng(50,50), droidMarkerOptions);
-    var geocoder = null;
-    GEvent.addListener(myMarker, "click", function() {
+    var BeerMe = {
+ 		// Create our droid and beer marker icon
+    	droidIcon:new GIcon(G_DEFAULT_ICON),
+    	droidMarkerOptions:null,
+    	beerIcon:new GIcon(G_DEFAULT_ICON),
+    	beerMarkerOptions:null,
+    	myMarkerInfo:document.createElement("div"),
+    	myMarker:null,
+    	map:null,
+    	geocoder:null,
+    	disableRefresh:function() {
+            var btn = document.getElementById('refreshBtn');
+            btn.disabled = true;
+            btn.innerHTML = 'Refreshing...';
+        },
+        enableRefresh:function() {
+        	var btn = document.getElementById('refreshBtn');
+            btn.disabled = false;
+            btn.innerHTML = 'Refresh location';
+        },
+        updateLocation:function() {
+            BeerMe.disableRefresh();
+        	var suc = function(p) {
+          		var point = new GLatLng(p.coords.latitude, p.coords.longitude);
+          		// Draw my position.
+          		BeerMe.myMarker.setLatLng(point);
+          		BeerMe.map.addOverlay(myMarker);
+          		// Set map center.
+          		BeerMe.map.setCenter(point, 10);
+          		// Call for YQL data.
+          		BeerMe.beerUpdate(p.coords.latitude, p.coords.longitude);
+          		BeerMe.enableRefresh();
+    		};
+    		var die = function() {
+    			document.getElementById('refreshBtn').innerHTML = 'GPS is unavailable';
+      			alert('GPS Failure! Please enable GPS to be able to use Beer Me.');
+    		};
+      		navigator.geolocation.getCurrentPosition(suc,die);
+        },
+        getBeerFromBeerMapping:function(lat,lng) {
+            var cb_GeoCoderReverse = function(response) {
+            	// Calback for retrieving geographic information about current location.
+                // TODO: Handle status code 602: Unknown area.
+            	if (!response || response.Status.code != 200) {
+            		alert("Error retrieving data from BeerMapping.com, status code:" + response.Status.code);
+            	} else {
+                	// If we get data back about our location, make a call to BeerMapping.
+              		var place = response.Placemark[0];
+              		var city = place.AddressDetails.Country.AdministrativeArea.SubAdministrativeArea.SubAdministrativeAreaName;
+              		var state = place.AddressDetails.Country.AdministrativeArea.AdministrativeAreaName; 
+              		var url = "http://beermapping.com/webservice/locstate/33aac0960ce1fd70bd6e07191af96bd5/" + state;
+              		var BeerXHR = new XMLHttpRequest();
+              		// And this is the BeerMapping callback.
+                	var cb_BeerMapping = function() {
+                    	if (BeerXHR.readyState == 4 && BeerXHR.status == 200) {
+                        	// Grab response and parse!
+                        	var response = BeerXHR.responseXML.documentElement;
+                        	var locations = response.getElementsByTagName('location');
+                        	for (var i = 0; i < locations.length; i++) {
+                        		function createBMBeerMarker(node) {
+                        			var beerMarker = new GMarker(new GLatLng(0,0), beerMarkerOptions);
+                        		    GEvent.addListener(beerMarker, "click", function() {
+                        		    	var myHtml = "<b>" + node.Title + "</b><br/>" + node.Street + "<br/>" + node.City + ", " + node.State + "<br/>" + "BeerMapping location!"; 
+                        		    	beerMarker.openInfoWindowHtml(myHtml);
+                        		    });
+                        		    return beerMarker;
+                        		}
+                            	try {
+                                	var name = locations[i].getElementsByTagName('name')[0].childNodes[0].nodeValue;
+                            		var city = locations[i].getElementsByTagName('city')[0].childNodes[0].nodeValue;
+                            		var street = locations[i].getElementsByTagName('street')[0].childNodes[0].nodeValue;
+                            		var state = locations[i].getElementsByTagName('state')[0].childNodes[0].nodeValue;
+                            		if (city != null && street != null && state != null) {
+                                		// Callback for getting lat/lng coords of BeerMapping locations.
+                                		var node = {
+                                        		"Title":name,
+                                        		"Street":street,
+                                        		"City":city,
+                                        		"State":state
+                                        };
+                                		var thisMarker = createBMBeerMarker(node);
+                                		console.log("Created BM marker '" + name + "' @ " + street);
+                                		var cb_GeoCoder = function(resp) {
+                                    		if (!resp || resp.Status.code != 200) {
+                                        		console.log('Geocoding response invalid.');
+                                    		} else {
+                                        		// Grab coord info.
+                                    			var bar = resp.Placemark[0];
+                                    			var barLng = bar.Point.coordinates[0];
+                                    			var barLat = bar.Point.coordinates[1];
+                                    			console.log('Setting BM marker at ' + barLat + ', ' + barLng);
+                                    			thisMarker.setLatLng(new GLatLng(barLat,barLng));
+                                    			map.addOverlay(thisMarker);
+                                    		}
+                                		}
+                                		var addressString = street + ", " + city + ", " + state;
+                                		geocoder.getLocations(addressString, cb_GeoCoder);
+                            		}
+                            	} catch (e) {
+                                	console.log('Error while processing BeerMapping locations, exception: ' + e.toString());
+                                	continue;
+                            	}
+                        	}
+                    	}	
+                	}
+              		BeerXHR.onreadystatechange = cb_BeerMapping;
+              		BeerXHR.open("GET", url, true);
+              		BeerXHR.send(null);
+            	}
+            };
+        	// Get city name of current place.
+        	BeerMe.geocoder.getLocations(new GLatLng(lat,lng),cb_GeoCoderReverse);
+        },
+        getBeerFromYQL:function(lat,lng) {
+        	// Get data from YQL.
+        	var config = {'debug' : true};
+        	var format = '{Title}';
+        	var yqlQuery = "select * from local.search where radius=35 and latitude=" + lat + " and longitude=" + lng + " and query='beer'";
+        	var insertEl = 'widgetContainer';
+        	yqlWidget.push(yqlQuery, config, format, insertEl, map);
+        	yqlWidget.render();
+        },
+        beerUpdate:function(lat,lng) {
+        	BeerMe.getBeerFromYQL(lat,lng);
+        	BeerMe.getBeerFromBeerMapping(lat,lng);
+        }
+    };
+    BeerMe.droidIcon.image = "images/androidmarker.png";
+    BeerMe.droidIcon.iconSize = new GSize(50,58);
+    BeerMe.droidMarkerOptions = { icon:BeerMe.droidIcon };
+    BeerMe.beerIcon.image = "images/beericon.png";
+    BeerMe.beerIcon.iconSize = new GSize(40,45);
+    BeerMe.beerMarkerOptions = { icon:BeerMe.beerIcon };
+	BeerMe.myMarkerInfo.innerHTML = 'Your position';
+	BeerMe.myMarker = new GMarker(new GLatLng(0,0), BeerMe.droidMarkerOptions);
+    GEvent.addListener(BeerMe.myMarker, "click", function() {
     	var myHtml = "<b>Your position</b>";
-    	myMarker.openInfoWindowHtml(myHtml);
+    	BeerMe.myMarker.openInfoWindowHtml(myHtml);
     });
     function initialize() {
-    	map = new GMap2(document.getElementById("map_canvas"));
-    	map.addControl(new GLargeMapControl);
-    	geocoder = new GClientGeocoder();
-    	updateLocation();
-    }
-    function disableRefresh() {
-        var btn = document.getElementById('refreshBtn');
-        btn.disabled = true;
-        btn.innerHTML = 'Refreshing...';
-    }
-    function enableRefresh() {
-    	var btn = document.getElementById('refreshBtn');
-        btn.disabled = false;
-        btn.innerHTML = 'Refresh location';
-    }
-    function updateLocation() {
-        disableRefresh();
-    	var suc = function(p) {
-      		var point = new GLatLng(p.coords.latitude, p.coords.longitude);
-      		// Draw my position.
-      		myMarker.setLatLng(point);
-      		map.addOverlay(myMarker);
-      		// Set map center.
-      		map.setCenter(point, 10);
-      		// Call for YQL data.
-      		beerUpdate(p.coords.latitude, p.coords.longitude);
-      		enableRefresh();
-		};
-		var die = function() {
-			document.getElementById('refreshBtn').innerHTML = 'GPS is unavailable';
-  			alert('GPS Failure! Please enable GPS to be able to use Beer Me.');
-		};
-  		navigator.geolocation.getCurrentPosition(suc,die);
-    }
-    function getBeerFromBeerMapping(lat,lng) {
-        var cb_GeoCoder = function(response) {
-        	// Calback for retrieving geographic information about current locaiton.
-            // TODO: Handle status code 602: Unknown area.
-        	if (!response || response.Status.code != 200) {
-        		alert("Error retrieving data from BeerMapping.com, status code:" + response.Status.code);
-        	} else {
-          		var place = response.Placemark[0];
-          		var city = place.AddressDetails.Country.AdministrativeArea.SubAdministrativeArea.SubAdministrativeAreaName;
-          		var state = place.AddressDetails.Country.AdministrativeArea.AdministrativeAreaName; 
-          		var url = "http://beermapping.com/webservice/locstate/33aac0960ce1fd70bd6e07191af96bd5/" + state;
-          		var BeerXHR = new XMLHttpRequest();
-          		// And this is the BeerMapping callback.
-            	var cb_BeerMapping = function() {
-                	if (BeerXHR.readyState == 4 && BeerXHR.status == 200) {
-                    	// Grab response and parse!
-                    	var response = BeerXHR.responseXML.documentElement;
-                	}	
-            	}
-          		BeerXHR.onreadystatechange = cb_BeerMapping;
-          		BeerXHR.open("GET", url, true);
-          		BeerXHR.send(null);
-        	}
-        }
-    	// Get city name of current place.
-    	geocoder.getLocations(new GLatLng(lat,lng),cb_GeoCoder);
-    }
-    function getBeerFromYQL(lat,lng) {
-    	// Get data from YQL.
-    	var config = {'debug' : true};
-    	var format = '{Title}';
-    	var yqlQuery = "select * from local.search where radius=35 and latitude=" + lat + " and longitude=" + lng + " and query='beer'";
-    	var insertEl = 'widgetContainer';
-    	yqlWidget.push(yqlQuery, config, format, insertEl, map);
-    	yqlWidget.render();
-    }
-    function beerUpdate(lat,lng) {
-    	getBeerFromYQL(lat,lng);
-    	getBeerFromBeerMapping(lat,lng);
+    	BeerMe.map = new GMap2(document.getElementById("map_canvas"));
+    	BeerMe.map.addControl(new GLargeMapControl);
+    	BeerMe.geocoder = new GClientGeocoder();
+    	BeerMe.updateLocation();
     }
 	  </script>
   </head>
-  <body onload="setTimeout('initialize()',2500)" onunload="GUnload()" id="stage" class="theme">
+  <body onload="/*TODO: Check for GPS/Internet availability.*/setTimeout('initialize()',2500)" onunload="GUnload()" id="stage" class="theme">
   <div id="map_cont" style="width:100%;padding:2px;height:279px;">
   	<div id="map_canvas" style="width:100%;height:100%;z-index:1;"></div>
   </div>
