@@ -46,8 +46,6 @@ public class MapViewActivity extends MapActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //View tPanel = findViewById(R.id.transparent_panel);
-        //tPanel.setVisibility(View.GONE);
         setContentView(R.layout.main);
         // TODO: Add a loading screen.
         // Add the view and controller overlays.
@@ -63,20 +61,24 @@ public class MapViewActivity extends MapActivity {
     	droid = this.getResources().getDrawable(R.drawable.androidmarker);
     	myOverlay = new DrawOverlay(droid);
     	mapOverlays.add(myOverlay);
+    	// Set static properties.
+    	myPlace = new Place("Me");
+    	myPlace.isMe = true;
+        myPlace.address = "My Position";
     	// Set location manager.
     	locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
     	// Grab cached location.
     	Location myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-    	// Set title, identity flag and description on your location marker, since this is static.
-    	myPlace = new Place("Me");
-    	myPlace.isMe = true;
-        myPlace.address = "My Position";
         // Call drawing with current location.
-    	Log.d(TAG,"Retrieved cached location: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
+    	Log.d(TAG,"Retrieved cached location for application startup: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
     	refresh(myLocation);
     	locationListener = new MyLocationListener();
     }
-    private void refresh(Location loc) {
+    /**
+     * Re-renders user and beer locations based on specified coordinates.
+     * @param loc Location object specifying current user coordinates.
+     */
+    public void refresh(Location loc) {
     	myLat = loc.getLatitude();
     	myLng = loc.getLongitude();
     	myGeo = new GeoPoint((int)(myLat*1E6),(int)(myLng*1E6)); 
@@ -85,6 +87,9 @@ public class MapViewActivity extends MapActivity {
     	this.updateMyPosition();
     	this.updateBeers();
     }
+    /**
+     * Re-renders user position based on current user position.
+     */
     private void updateMyPosition() {
     	myOverlay.clear(false);
     	myOverlay.addOverlay(new OverlayItem(myGeo, "Me", "My Position."),myPlace);
@@ -92,8 +97,11 @@ public class MapViewActivity extends MapActivity {
 		mapController.setZoom(13);
 		Toast.makeText(MapViewActivity.this, "Position updated.", Toast.LENGTH_SHORT).show();
     }
+    /**
+     * Queries online services (Yahoo, BeerMapping soon...) for available beers close to current user location, and renders this information to UI.
+     */
     private void updateBeers() {
-    	// Make the YQL request.
+    	// Make the YQL request. TODO: Get a proper appid...
     	String request = "http://local.yahooapis.com/LocalSearchService/V3/localSearch?appid=YahooDemo&query=beer&latitude=" + String.valueOf(myLat) + "&longitude=" + String.valueOf(myLng) + "&radius=35&output=xml";
 		YQLParser yql = new YQLParser(request);
 		try {
