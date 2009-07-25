@@ -45,11 +45,13 @@ public class MapViewActivity extends MapActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //View tPanel = findViewById(R.id.transparent_panel);
+        //tPanel.setVisibility(View.GONE);
         setContentView(R.layout.main);
         // Add the view and controller overlays.
     	mapView = (MapView)findViewById(R.id.mapview);
     	mapView.setBuiltInZoomControls(true);        
-    	mapView.setSatellite(true);
+    	mapView.setSatellite(false);
     	mapController = mapView.getController();
     	// Create overlays.
     	mapOverlays = mapView.getOverlays();
@@ -63,20 +65,23 @@ public class MapViewActivity extends MapActivity {
     	locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
     	// Grab cached location.
     	Location myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-    	myOverlay.addOverlay(new OverlayItem(new GeoPoint((int)(myLocation.getLatitude()*1E6),(int)(myLocation.getLongitude()*1E6)),"My Position","My Position"));
-    	this.updateMyPosition(myLocation);
-    	mapController.setCenter(myGeo);
-		mapController.setZoom(15);
-    	this.updateBeers();
+    	Log.d(TAG,"Retrieved cached location: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
+    	refresh(myLocation);
     	locationListener = new MyLocationListener();
     }
-    private void updateMyPosition(Location loc) {
+    private void refresh(Location loc) {
     	myLat = loc.getLatitude();
     	myLng = loc.getLongitude();
+    	this.updateMyPosition();
+    	this.updateBeers();
+    }
+    private void updateMyPosition() {
     	myOverlay.clear();
     	myGeo = new GeoPoint((int)(myLat*1E6),(int)(myLng*1E6));
     	myOverlay.addOverlay(new OverlayItem(myGeo, "Me", "My Position."));
-		Toast.makeText(MapViewActivity.this, "Position updated.", Toast.LENGTH_SHORT);
+    	mapController.setCenter(myGeo);
+		mapController.setZoom(13);
+		Toast.makeText(MapViewActivity.this, "Position updated.", Toast.LENGTH_SHORT).show();
     }
     private void updateBeers() {
     	// Make the YQL request.
@@ -92,10 +97,21 @@ public class MapViewActivity extends MapActivity {
 				int geoLat = (int)(curPlace.lat*1E6);
 				int geoLng = (int)(curPlace.lng*1E6);
 				GeoPoint barPosition = new GeoPoint(geoLat,geoLng);
-				barOverlay.addOverlay(new OverlayItem(barPosition,curPlace.name,curPlace.name));
+				String beerDesc = "";
+				if (curPlace.address.length() > 0) {
+					beerDesc = curPlace.address + "\n";
+				}
+				if (curPlace.phone.length() > 0) {
+					beerDesc += "Phone: " + curPlace.phone + "\n";
+				}
+				if (curPlace.reviewlink.length() > 0) {
+					beerDesc += "Placeholder link here somehow...";
+				}
+				Log.d(TAG, "Adding bar ('" + curPlace.name + "') to map overlay.");
+				barOverlay.addOverlay(new OverlayItem(barPosition,curPlace.name,beerDesc),curPlace);
 			}
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			Log.d(TAG,"Exception caught in YQL beer parsing, message: " + e.getMessage());
 		}
     }
 	@Override
@@ -116,10 +132,7 @@ public class MapViewActivity extends MapActivity {
 	private class MyLocationListener implements LocationListener {
 
 		public void onLocationChanged(Location location) {
-			myLat = location.getLatitude();
-			myLng = location.getLongitude();
-			updateMyPosition(location);
-			updateBeers();
+			refresh(location);
 		}
 
 		public void onProviderDisabled(String provider) {
@@ -131,8 +144,7 @@ public class MapViewActivity extends MapActivity {
 		}
 
 		public void onStatusChanged(String provider, int status, Bundle extras) {
-			// TODO Auto-generated method stub
-
+			Log.d(TAG, "Location provider ('" + provider + "') status changed to '" + (status==0?"OUT_OF_SERVICE":status==1?"TEMPORARILY_UNAVAILABLE":"AVAILABLE") + "'.");
 		}
 
 	}

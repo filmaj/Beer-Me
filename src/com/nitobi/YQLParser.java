@@ -15,13 +15,15 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class YQLParser extends DefaultHandler
 {     
-    /**
-     * The constructor for the RSS Parser
-     * @param url
-     */
+	// TODO: Would like to abstract this class enough to use with arbitrary YQL data...
 	private ArrayList<Place> places;
     private String urlString;
     private String currentPlace;
+    private String currentAddress;
+    private String currentCity;
+    private String currentState;
+    private String currentPhone;
+    private String currentLink;
     private double currentLat;
     private double currentLon;
     private boolean inResult;
@@ -49,40 +51,69 @@ public class YQLParser extends DefaultHandler
         }
         if (urlInputStream != null) urlInputStream.close();
     }
-    
+    /**
+     * Logic executed when the parser encounters a new XML element.
+     */
     public void startElement(String uri, String localName, String qName, Attributes attributes) {
-        /** First lets check for a Result */
+    	// If it's a new 'result' element, reset the local variables.
         if (localName.equalsIgnoreCase("result")) {
                 this.inResult = true;
                 this.currentLat = 0;
                 this.currentLon = 0;
                 this.currentPlace = null;
+                this.currentAddress = null;
+                this.currentCity = null;
+                this.currentState = null;
+                this.currentPhone = null;
+                this.currentLink = null;
         }
     }
    
     /**
-     * This is where we actually parse for the elements contents
+     * Logic executed when the parser encounters the end of an XML element. This is where we actually parse for the elements contents.
      */
     public void endElement(String uri, String localName, String qName) {
-        /** Check we have a Result */
+        // Check we have a Result
         if (this.inResult == false) {
             return;
         }
-        
-        /** Check are at the end of an item */
+        // Check are at the end of a result item. Here is where we construct a Place instance and add it to our list.
         if (localName.equalsIgnoreCase("result")) {
                 this.inResult = false;
+                // Make sure we have, at the least, GPS coordinates and a place name.
+                if (this.currentLat != 0.0 && this.currentLon != 0.0 && this.currentPlace != null && this.currentPlace.length() > 0) {
+                	Place obj = new Place(this.currentPlace);
+                	obj.lat = this.currentLat;
+                	obj.lng = this.currentLon;
+                	// Construct an address string based on available address, city and state information.
+                	String finalAddressString = "";
+                	if (this.currentState != null) {
+                		finalAddressString = this.currentState;
+                	}
+                	if (this.currentCity != null) {
+                		finalAddressString = this.currentCity + ", " + finalAddressString;
+                	}
+                	if (this.currentAddress != null)  {
+                		finalAddressString = this.currentAddress + ", " + finalAddressString;
+                	}
+                	obj.address = finalAddressString;
+                	if (this.currentPhone != null) {
+                		obj.phone = this.currentPhone;
+                	}
+                	if (this.currentLink != null) {
+                		obj.reviewlink = this.currentLink;
+                	}
+                	this.places.add(obj);
+                }
         }
-       
-        /** Now we need to parse which title we are in */
+        // Parse title
         if (localName.equalsIgnoreCase("title"))
         {
             if (this.inResult == true){
                 this.currentPlace = this.text.toString().trim();
             } 
         }       
-       
-        /** Now we need to parse geo coords */
+        // Parse geo coords
         if (localName.equalsIgnoreCase("latitude"))
         {
             if (this.inResult == true){
@@ -93,15 +124,37 @@ public class YQLParser extends DefaultHandler
         {
             if (this.inResult == true){
                 this.currentLon = Double.parseDouble(this.text.toString().trim());
-                if (this.currentLat != 0.0) {
-                	if (this.currentPlace.length() > 0) {
-                		Place obj = new Place(this.currentPlace);
-                		obj.lat = this.currentLat;
-                		obj.lng = this.currentLon;
-                		this.places.add(obj);
-                	}
-                }
             } 
+        }
+        if (localName.equalsIgnoreCase("address"))
+        {
+        	if (this.inResult == true){
+                this.currentAddress = this.text.toString().trim();
+            }
+        }
+        if (localName.equalsIgnoreCase("city"))
+        {
+        	if (this.inResult == true){
+                this.currentCity = this.text.toString().trim();
+            }
+        }
+        if (localName.equalsIgnoreCase("state"))
+        {
+        	if (this.inResult == true){
+                this.currentState = this.text.toString().trim();
+            }
+        }
+        if (localName.equalsIgnoreCase("phone"))
+        {
+        	if (this.inResult == true){
+                this.currentPhone = this.text.toString().trim();
+            }
+        }
+        if (localName.equalsIgnoreCase("businessurl"))
+        {
+        	if (this.inResult == true){
+                this.currentLink = this.text.toString().trim();
+            }
         }
         this.text.setLength(0);
     }

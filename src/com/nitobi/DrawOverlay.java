@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 public class DrawOverlay extends com.google.android.maps.ItemizedOverlay {
 	private ArrayList<OverlayItem> mOverlays = new ArrayList<OverlayItem>();
+	private ArrayList<Place> mPlaces = new ArrayList<Place>();
 	
 	public DrawOverlay(Drawable marker) {
 		super(boundCenterBottom(marker));
@@ -17,7 +18,6 @@ public class DrawOverlay extends com.google.android.maps.ItemizedOverlay {
 
 	@Override
 	protected OverlayItem createItem(int i) {
-		// TODO Auto-generated method stub
 		return mOverlays.get(i);
 	}
 
@@ -26,12 +26,21 @@ public class DrawOverlay extends com.google.android.maps.ItemizedOverlay {
 		// TODO Auto-generated method stub
 		return mOverlays.size();
 	}
-	public void addOverlay(OverlayItem overlay) {
+	public void addOverlay(OverlayItem overlay, Place place) {
     	mOverlays.add(overlay);
+    	mPlaces.add(place);
     	populate();
 	}
 	public void clear() {
 		mOverlays = new ArrayList<OverlayItem>();
+		mPlaces = new ArrayList<Place>();
 		populate();
+	}
+	@Override
+	public boolean onTap(int index) {
+		// TODO: Show dialog with bar info.
+		OverlayItem marker = mOverlays.get(index);
+		Place place = mPlaces.get(index);
+		return true;
 	}
 }
