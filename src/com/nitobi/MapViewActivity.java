@@ -37,6 +37,7 @@ public class MapViewActivity extends MapActivity {
 	private double myLat;
 	private double myLng;
 	private GeoPoint myGeo;
+	private Place myPlace;
 	private static final String TAG = "BeerMe";
 	private static final int UPDATE_INTERVAL_MS = 120000;
 	private static final int UPDATE_DISTANCE_M = 250;
@@ -48,6 +49,7 @@ public class MapViewActivity extends MapActivity {
         //View tPanel = findViewById(R.id.transparent_panel);
         //tPanel.setVisibility(View.GONE);
         setContentView(R.layout.main);
+        // TODO: Add a loading screen.
         // Add the view and controller overlays.
     	mapView = (MapView)findViewById(R.id.mapview);
     	mapView.setBuiltInZoomControls(true);        
@@ -65,6 +67,11 @@ public class MapViewActivity extends MapActivity {
     	locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
     	// Grab cached location.
     	Location myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+    	// Set title, identity flag and description on your location marker, since this is static.
+    	myPlace = new Place("Me");
+    	myPlace.isMe = true;
+        myPlace.address = "My Position";
+        // Call drawing with current location.
     	Log.d(TAG,"Retrieved cached location: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
     	refresh(myLocation);
     	locationListener = new MyLocationListener();
@@ -72,13 +79,15 @@ public class MapViewActivity extends MapActivity {
     private void refresh(Location loc) {
     	myLat = loc.getLatitude();
     	myLng = loc.getLongitude();
+    	myGeo = new GeoPoint((int)(myLat*1E6),(int)(myLng*1E6)); 
+        myPlace.lat = myLat;
+        myPlace.lng = myLng;
     	this.updateMyPosition();
     	this.updateBeers();
     }
     private void updateMyPosition() {
-    	myOverlay.clear();
-    	myGeo = new GeoPoint((int)(myLat*1E6),(int)(myLng*1E6));
-    	myOverlay.addOverlay(new OverlayItem(myGeo, "Me", "My Position."));
+    	myOverlay.clear(false);
+    	myOverlay.addOverlay(new OverlayItem(myGeo, "Me", "My Position."),myPlace);
     	mapController.setCenter(myGeo);
 		mapController.setZoom(13);
 		Toast.makeText(MapViewActivity.this, "Position updated.", Toast.LENGTH_SHORT).show();
@@ -91,7 +100,7 @@ public class MapViewActivity extends MapActivity {
 			yql.parse();
 			ArrayList<Place> response = yql.getPlaces();
 			// Draw places.
-			barOverlay.clear();
+			barOverlay.clear(false);
 			for (int i = 0; i < response.size(); i++) {
 				Place curPlace = response.get(i);
 				int geoLat = (int)(curPlace.lat*1E6);
@@ -140,7 +149,7 @@ public class MapViewActivity extends MapActivity {
 		}
 
 		public void onProviderEnabled(String provider) {
-			Toast.makeText(MapViewActivity.this, "Your location provider ('" + provider + "') has been disabled.", Toast.LENGTH_SHORT).show();
+			Toast.makeText(MapViewActivity.this, "Your location provider ('" + provider + "') has been enabled.", Toast.LENGTH_SHORT).show();
 		}
 
 		public void onStatusChanged(String provider, int status, Bundle extras) {

@@ -31,10 +31,15 @@ public class DrawOverlay extends com.google.android.maps.ItemizedOverlay {
     	mPlaces.add(place);
     	populate();
 	}
-	public void clear() {
+	/**
+	 * Clears all overlay markers and associated places, and optionally immediately re-renders the map.
+	 * @param refreshScreen Should the overlay items be drawn immediately after clearing?
+	 */
+	public void clear(boolean refreshScreen) {
 		mOverlays = new ArrayList<OverlayItem>();
 		mPlaces = new ArrayList<Place>();
-		populate();
+		if (refreshScreen)
+			populate();
 	}
 	@Override
 	public boolean onTap(int index) {
