@@ -13,9 +13,8 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-public class YQLParser extends DefaultHandler
-{     
-	// TODO: Would like to abstract this class enough to use with arbitrary YQL data...
+public class BeerMappingParser extends DefaultHandler {
+	
 	private ArrayList<Place> places;
     private String urlString;
     private String currentPlace;
@@ -29,7 +28,7 @@ public class YQLParser extends DefaultHandler
     private boolean inResult;
     private StringBuilder text;
     
-    public YQLParser(String url) {
+    public BeerMappingParser(String url) {
         this.urlString = url;
         this.text = new StringBuilder();
         this.places = new ArrayList<Place>();
@@ -94,7 +93,7 @@ public class YQLParser extends DefaultHandler
                 		finalAddressString = this.currentCity + ", " + finalAddressString;
                 	}
                 	if (this.currentAddress != null)  {
-                		finalAddressString = this.currentAddress + "\n" + finalAddressString;
+                		finalAddressString = this.currentAddress + ", " + finalAddressString;
                 	}
                 	obj.address = finalAddressString;
                 	if (this.currentPhone != null) {

@@ -10,7 +10,6 @@ import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -18,10 +17,6 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
 public class MapViewActivity extends MapActivity {
@@ -56,10 +51,10 @@ public class MapViewActivity extends MapActivity {
     	// Create overlays.
     	mapOverlays = mapView.getOverlays();
     	beer = this.getResources().getDrawable(R.drawable.beericon);
-    	barOverlay = new DrawOverlay(beer);
+    	barOverlay = new DrawOverlay(beer, this);
     	mapOverlays.add(barOverlay);
     	droid = this.getResources().getDrawable(R.drawable.androidmarker);
-    	myOverlay = new DrawOverlay(droid);
+    	myOverlay = new DrawOverlay(droid, this);
     	mapOverlays.add(myOverlay);
     	// Set static properties.
     	myPlace = new Place("Me");
