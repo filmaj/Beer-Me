@@ -10,6 +10,7 @@ import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -42,7 +43,8 @@ public class MapViewActivity extends MapActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        // TODO: Add a loading screen.
+        // Create and show a progress dialog.
+        ProgressDialog loadDialog = ProgressDialog.show(this, "", "Loading. Please wait...", true);
         // Add the view and controller overlays.
     	mapView = (MapView)findViewById(R.id.mapview);
     	mapView.setBuiltInZoomControls(true);        
@@ -64,6 +66,7 @@ public class MapViewActivity extends MapActivity {
     	locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
     	// Grab cached location.
     	Location myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+    	loadDialog.dismiss();
         // Call drawing with current location.
     	Log.d(TAG,"Retrieved cached location for application startup: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
     	refresh(myLocation);
@@ -97,7 +100,7 @@ public class MapViewActivity extends MapActivity {
      */
     private void updateBeers() {
     	// Make the YQL request. TODO: Get a proper appid...
-    	String request = "http://local.yahooapis.com/LocalSearchService/V3/localSearch?appid=YahooDemo&query=beer&latitude=" + String.valueOf(myLat) + "&longitude=" + String.valueOf(myLng) + "&radius=35&output=xml";
+    	String request = "http://local.yahooapis.com/LocalSearchService/V3/localSearch?appid=MJLfQQ4i&query=beer&latitude=" + String.valueOf(myLat) + "&longitude=" + String.valueOf(myLng) + "&radius=35&output=xml";
 		YQLParser yql = new YQLParser(request);
 		try {
 			yql.parse();

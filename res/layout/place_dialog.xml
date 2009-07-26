@@ -15,11 +15,13 @@
               android:layout_height="wrap_content"
               android:textColor="#FFF"
               android:autoLink="phone"
+              android:textColorLink="#66CCFF"
               />
 	<TextView android:id="@+id/link"
               android:layout_width="fill_parent"
               android:layout_height="wrap_content"
               android:textColor="#FFF"
               android:autoLink="web"
+              android:textColorLink="#66CCFF"
               />
 </LinearLayout>
