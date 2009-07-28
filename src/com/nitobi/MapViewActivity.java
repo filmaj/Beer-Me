@@ -1,7 +1,9 @@
 package com.nitobi;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
@@ -13,6 +15,8 @@ import com.google.android.maps.OverlayItem;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -30,13 +34,16 @@ public class MapViewActivity extends MapActivity {
 	private DrawOverlay myOverlay;
 	private LocationManager locationManager;
 	private LocationListener locationListener;
+	private ProgressDialog loadDialog;
 	private double myLat;
 	private double myLng;
 	private GeoPoint myGeo;
 	private Place myPlace;
 	private static final String TAG = "BeerMe";
+	private static final String DEFAULT_ADDRESS = "My position";
 	private static final int UPDATE_INTERVAL_MS = 120000;
 	private static final int UPDATE_DISTANCE_M = 250;
+	
 	
     /** Called when the activity is first created. */
     @Override
@@ -44,7 +51,7 @@ public class MapViewActivity extends MapActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         // Create and show a progress dialog.
-        ProgressDialog loadDialog = ProgressDialog.show(this, "", "Loading. Please wait...", true);
+        loadDialog = ProgressDialog.show(this, "", "Loading. Please wait...", true);
         // Add the view and controller overlays.
     	mapView = (MapView)findViewById(R.id.mapview);
     	mapView.setBuiltInZoomControls(true);        
@@ -61,14 +68,25 @@ public class MapViewActivity extends MapActivity {
     	// Set static properties.
     	myPlace = new Place("Me");
     	myPlace.isMe = true;
-        myPlace.address = "My Position";
     	// Set location manager.
     	locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
     	// Grab cached location.
     	Location myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-    	loadDialog.dismiss();
-        // Call drawing with current location.
     	Log.d(TAG,"Retrieved cached location for application startup: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
+    	// Do a reverse geo-coding call with current location to determine adress / place name. Also will be used later by BeerMapping.
+    	Geocoder coder = new Geocoder(this, Locale.getDefault());
+    	List<Address> addresses;
+    	try {
+			 addresses = coder.getFromLocation(myLocation.getLatitude(), myLocation.getLongitude(), 1);
+			 myPlace.address = addresses.get(0).getAdminArea();
+			 myPlace.address = (myPlace.address.length()>0?myPlace.address:DEFAULT_ADDRESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			myPlace.address = DEFAULT_ADDRESS;
+			Log.d(TAG,e.getMessage());
+			Toast.makeText(MapViewActivity.this, "Could not determine current location name. Only one beer data source in use (no BeerMapping).", Toast.LENGTH_LONG).show();
+		}
+        // Call drawing with current location.
     	refresh(myLocation);
     	locationListener = new MyLocationListener();
     }
@@ -128,6 +146,7 @@ public class MapViewActivity extends MapActivity {
 		} catch (Exception e) {
 			Log.d(TAG,"Exception caught in YQL beer parsing, message: " + e.getMessage());
 		}
+		
     }
 	@Override
 	protected boolean isRouteDisplayed() {
@@ -136,6 +155,8 @@ public class MapViewActivity extends MapActivity {
 	}
 	@Override
 	public void onResume() {
+		if (loadDialog.isShowing())
+			loadDialog.dismiss();
 		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, UPDATE_INTERVAL_MS, UPDATE_DISTANCE_M, locationListener);
 		super.onResume();
 	}
