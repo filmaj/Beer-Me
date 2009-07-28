@@ -16,13 +16,17 @@ public final class R {
         public static final int icon=0x7f020002;
     }
     public static final class id {
+        public static final int address=0x7f050002;
+        public static final int layout_root=0x7f050001;
+        public static final int link=0x7f050004;
         public static final int mapview=0x7f050000;
+        public static final int phone=0x7f050003;
     }
     public static final class layout {
         public static final int main=0x7f030000;
+        public static final int place_dialog=0x7f030001;
     }
     public static final class string {
-        public static final int app_name=0x7f040001;
-        public static final int hello=0x7f040000;
+        public static final int app_name=0x7f040000;
     }
 }
