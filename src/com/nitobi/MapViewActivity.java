@@ -1,6 +1,5 @@
 package com.nitobi;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -34,6 +33,8 @@ public class MapViewActivity extends MapActivity {
 	private DrawOverlay myOverlay;
 	private LocationManager locationManager;
 	private LocationListener locationListener;
+	private LocationXMLParser yql;
+	private LocationXMLParser beerMapping;
 	private ProgressDialog loadDialog;
 	private double myLat;
 	private double myLng;
@@ -68,12 +69,15 @@ public class MapViewActivity extends MapActivity {
     	// Set static properties.
     	myPlace = new Place("Me");
     	myPlace.isMe = true;
+    	// Instantiate service XML parsers.
+    	yql = new LocationXMLParser("title","address","city","state","phone","businessurl","latitude","longitude","result");
+    	beerMapping = new LocationXMLParser("name","street","city","state","phone","reviewlink","latitude","longitude","location");
     	// Set location manager.
     	locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
     	// Grab cached location.
     	Location myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
     	Log.d(TAG,"Retrieved cached location for application startup: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
-    	// Do a reverse geo-coding call with current location to determine adress / place name. Also will be used later by BeerMapping.
+    	// Do a reverse geo-coding call with current location to determine address / place name. Also will be used later by BeerMapping.
     	Geocoder coder = new Geocoder(this, Locale.getDefault());
     	List<Address> addresses;
     	try {
@@ -118,8 +122,7 @@ public class MapViewActivity extends MapActivity {
      */
     private void updateBeers() {
     	// Make the YQL request. TODO: Get a proper appid...
-    	String request = "http://local.yahooapis.com/LocalSearchService/V3/localSearch?appid=MJLfQQ4i&query=beer&latitude=" + String.valueOf(myLat) + "&longitude=" + String.valueOf(myLng) + "&radius=35&output=xml";
-		YQLParser yql = new YQLParser(request);
+    	yql.setRequestURL("http://local.yahooapis.com/LocalSearchService/V3/localSearch?appid=MJLfQQ4i&query=beer&latitude=" + String.valueOf(myLat) + "&longitude=" + String.valueOf(myLng) + "&radius=35&output=xml");
 		try {
 			yql.parse();
 			ArrayList<Place> response = yql.getPlaces();
@@ -145,8 +148,8 @@ public class MapViewActivity extends MapActivity {
 			}
 		} catch (Exception e) {
 			Log.d(TAG,"Exception caught in YQL beer parsing, message: " + e.getMessage());
+			Toast.makeText(MapViewActivity.this, "There was a problem retrieving data from Yahoo. Loading data from BeerMapping...", Toast.LENGTH_LONG).show();
 		}
-		
     }
 	@Override
 	protected boolean isRouteDisplayed() {
