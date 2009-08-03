@@ -125,12 +125,13 @@ public class BeerMeActivity extends MapActivity {
      * @param message The dialog's message text.
      * @param progress Integer between 0 and 100 setting the progress of the dialog.
      */
-    private void showProgress(String message, int progress) {
+    private void showProgress(String message, int progress, int max) {
     	if (loadDialog==null) {
     		loadDialog = new ProgressDialog(this);
     		loadDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
     		loadDialog.setMessage(message);
     		loadDialog.setCancelable(false);
+    		loadDialog.setMax(max);
     		loadDialog.show();
         }
     	loadDialog.setProgress(progress);
@@ -189,7 +190,6 @@ public class BeerMeActivity extends MapActivity {
 		try {
 			yql.parse();
 			ArrayList<Place> response = yql.getPlaces();
-			Log.d(TAG, "YQL returned " + String.valueOf(numBars) + " bars.");
 			// Clear map first.
 			barOverlay.clear(false);
 			// Draw places.
@@ -288,6 +288,7 @@ public class BeerMeActivity extends MapActivity {
 			try {
 				ArrayList<Place> response = params[0];
 				numBars = response.size();
+				Log.d(TAG, "BeerDrawTask is beginning processing of " + String.valueOf(numBars) + " bars.");
 				for (int i = 0; i < numBars; i++) {
 					Place curPlace = response.get(i);
 					bmFlag = curPlace.isBeerMapping;
@@ -299,6 +300,7 @@ public class BeerMeActivity extends MapActivity {
 						if (addies.size() == 0) {
 							// Skip if no geo-coding results.
 							Log.d(TAG,"No geo-coding results returned for last geo-code call.");
+							publishProgress(i,1, numBars);
 							continue;
 						}
 						Address addy = addies.get(0);
@@ -306,21 +308,23 @@ public class BeerMeActivity extends MapActivity {
 						curPlace.lng = addy.getLongitude();
 					}
 					this.addBarIfClose(curPlace);
-					publishProgress((int) ((i / (float) numBars) * 100),(int)(bmFlag?1:0));
+					publishProgress(i,(int)(bmFlag?1:0), numBars);
 				}
 				completeFlag = true;
 			} catch (Exception e) {
 				completeFlag = false;
+				e.printStackTrace();
+				Log.d(TAG, "BeerDrawTask exception: " + e.getMessage());
 			}
 			return new boolean[]{completeFlag,bmFlag};
 		}
 		protected void onProgressUpdate(Integer... progress) {
 			if (progress[1] > 0) {
 				// BeerMapping
-				showProgress("Loading beers retrieved from BeerMapping.com...", progress[0]);
+				showProgress("Loading beers retrieved from BeerMapping.com...", progress[0], progress[2]);
 			} else {
 				// Yahoo
-				showProgress("Loading beers retrieved from Yahoo.com...", progress[0]);
+				showProgress("Loading beers retrieved from Yahoo.com...", progress[0], progress[2]);
 			}
 		}
 		protected void onPostExecute(boolean[] wasSuccessful) {
