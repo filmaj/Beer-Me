@@ -52,6 +52,7 @@ public class BeerMeActivity extends MapActivity {
 	private double myLng;
 	private boolean hasBM = false;
 	private boolean hasYahoo = false;
+	private boolean isRefreshing = false;
 	private GeoPoint myGeo;
 	private Place myPlace;
 	private static final String TAG = "BeerMe";
@@ -103,6 +104,11 @@ public class BeerMeActivity extends MapActivity {
         this.updateMyPosition();
     	locationListener = new MyLocationListener();
     }
+    /**
+     * Shows a dialog message with an 'OK' button.
+     * @param title The dialog's title text.
+     * @param message The dialog's message text.
+     */
     private void showDialog(String title, String message) {
         AlertDialog ad = new AlertDialog.Builder(this).create();
         ad.setButton("OK", new DialogInterface.OnClickListener() {
@@ -113,12 +119,25 @@ public class BeerMeActivity extends MapActivity {
         ad.setMessage(message);
         ad.show();
     }
-    private void showProgress(String title, String message, int progress) {
+    /**
+     * Shows a progress dialog, with a title & message. Sets the dialog's loading progress.
+     * @param title The dialog's title text.
+     * @param message The dialog's message text.
+     * @param progress Integer between 0 and 100 setting the progress of the dialog.
+     */
+    private void showProgress(String message, int progress) {
     	if (loadDialog==null) {
-    		loadDialog=ProgressDialog.show(this, title, message);
+    		loadDialog = new ProgressDialog(this);
+    		loadDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+    		loadDialog.setMessage(message);
+    		loadDialog.setCancelable(false);
+    		loadDialog.show();
         }
     	loadDialog.setProgress(progress);
     }
+    /**
+     * Kills the current progress dialog, if it exists.
+     */
     private void killProgress() {
     	if (loadDialog!=null) {
     		loadDialog.dismiss();
@@ -130,6 +149,8 @@ public class BeerMeActivity extends MapActivity {
      * @param loc Location object specifying current user coordinates.
      */
     public void refresh(Location loc) {
+    	if (isRefreshing) return;
+    	isRefreshing = true;
     	myLat = loc.getLatitude();
     	myLng = loc.getLongitude();
     	myGeo = new GeoPoint((int)(myLat*1E6),(int)(myLng*1E6)); 
@@ -147,6 +168,7 @@ public class BeerMeActivity extends MapActivity {
 		}
     	this.updateMyPosition();
     	this.updateBeers();
+    	isRefreshing = false;
     }
     /**
      * Re-renders user position based on current user position.
@@ -197,6 +219,7 @@ public class BeerMeActivity extends MapActivity {
 				showDialog("Cannot encode state name","There was a problem encoding your current state's name for data retrieval from BeerMapping. We can't retrieve beer info for you. Sorry :(");
 			}
 		}
+		// Refresh the screen.
 		barOverlay.refresh();
 		mapView.invalidate();
     }
@@ -292,13 +315,12 @@ public class BeerMeActivity extends MapActivity {
 			return new boolean[]{completeFlag,bmFlag};
 		}
 		protected void onProgressUpdate(Integer... progress) {
-			String title = "Loading data...";
 			if (progress[1] > 0) {
 				// BeerMapping
-				showProgress(title, "Loading beers retrieved from BeerMapping.com...", progress[0]);
+				showProgress("Loading beers retrieved from BeerMapping.com...", progress[0]);
 			} else {
 				// Yahoo
-				showProgress(title, "Loading beers retrieved from Yahoo.com...", progress[0]);
+				showProgress("Loading beers retrieved from Yahoo.com...", progress[0]);
 			}
 		}
 		protected void onPostExecute(boolean[] wasSuccessful) {
@@ -313,13 +335,13 @@ public class BeerMeActivity extends MapActivity {
 		    	} else {
 		    		hasBM = false;
 		    	}
-		    	String dialMsg = "The following beer sources have finished loading:\nYahoo: ";
-		    	if (hasYahoo) dialMsg += "Loaded successfully.\n";
-		    	else dialMsg += "Not loaded properly.\n";
+		    	String dialMsg = "The following beer sources have finished loading:\n\nYahoo: ";
+		    	if (hasYahoo) dialMsg += "Loaded successfully.\n\n";
+		    	else dialMsg += "Not loaded properly.\n\n";
 		    	if (myPlace.address!=DEFAULT_ADDRESS) {
 		    		dialMsg += "BeerMapping: ";
 		    		if (hasBM) dialMsg += "Loaded successfully.";
-		    		else dialMsg += "Not loaded properly.\n";
+		    		else dialMsg += "Not loaded properly.";
 		    	}
 		    	showDialog("Beer loading complete", dialMsg);
 		    } else {
