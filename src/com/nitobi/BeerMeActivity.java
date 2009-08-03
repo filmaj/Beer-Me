@@ -297,9 +297,10 @@ public class BeerMeActivity extends MapActivity {
 			boolean bmFlag = false;
 			try {
 				ArrayList<Place> response = params[0];
-				numBars = response.size();
+				int total = response.size();
+				numBars = total;
 				Log.d(TAG, "BeerDrawTask is beginning processing of " + String.valueOf(numBars) + " bars.");
-				for (int i = 0; i < numBars; i++) {
+				for (int i = 0; i < total; i++) {
 					Place curPlace = response.get(i);
 					bmFlag = curPlace.isBeerMapping;
 					if (bmFlag) {
@@ -310,7 +311,7 @@ public class BeerMeActivity extends MapActivity {
 						if (addies.size() == 0) {
 							// Skip if no geo-coding results.
 							Log.d(TAG,"No geo-coding results returned for last geo-code call.");
-							publishProgress(i,1, numBars);
+							publishProgress(i,1, total);
 							continue;
 						}
 						Address addy = addies.get(0);
@@ -318,13 +319,13 @@ public class BeerMeActivity extends MapActivity {
 						curPlace.lng = addy.getLongitude();
 					}
 					this.addBarIfClose(curPlace);
-					publishProgress(i,(int)(bmFlag?1:0), numBars);
+					publishProgress(i,(int)(bmFlag?1:0), total);
 				}
 				completeFlag = true;
 			} catch (Exception e) {
+				Log.d(TAG, "BeerDrawTask exception: " + e.getMessage());
 				completeFlag = false;
 				e.printStackTrace();
-				Log.d(TAG, "BeerDrawTask exception: " + e.getMessage());
 			}
 			return new boolean[]{completeFlag,bmFlag};
 		}
