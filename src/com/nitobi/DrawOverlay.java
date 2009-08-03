@@ -34,6 +34,9 @@ public class DrawOverlay extends com.google.android.maps.ItemizedOverlay {
 		// TODO Auto-generated method stub
 		return mOverlays.size();
 	}
+	public void refresh() {
+		populate();
+	}
 	public void addOverlay(OverlayItem overlay, Place place) {
     	mOverlays.add(overlay);
     	mPlaces.add(place);

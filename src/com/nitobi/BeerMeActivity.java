@@ -50,6 +50,8 @@ public class BeerMeActivity extends MapActivity {
 	private int numBars = 0;
 	private double myLat;
 	private double myLng;
+	private boolean hasBM = false;
+	private boolean hasYahoo = false;
 	private GeoPoint myGeo;
 	private Place myPlace;
 	private static final String TAG = "BeerMe";
@@ -195,6 +197,8 @@ public class BeerMeActivity extends MapActivity {
 				showDialog("Cannot encode state name","There was a problem encoding your current state's name for data retrieval from BeerMapping. We can't retrieve beer info for you. Sorry :(");
 			}
 		}
+		barOverlay.refresh();
+		mapView.invalidate();
     }
     
 	@Override
@@ -305,15 +309,24 @@ public class BeerMeActivity extends MapActivity {
 		    //tell the user how it went
 		    if (bmFlag) {
 		    	if (completeFlag) {
-		    		showDialog("Data loaded successfully", "BeerMapping.com beers loaded into your map successfully!");
+		    		hasBM = true;
 		    	} else {
-		    		showDialog("Problem loading data", "Not all BeerMapping.com data was loaded properly...");
+		    		hasBM = false;
 		    	}
+		    	String dialMsg = "The following beer sources have finished loading:\nYahoo: ";
+		    	if (hasYahoo) dialMsg += "Loaded successfully.\n";
+		    	else dialMsg += "Not loaded properly.\n";
+		    	if (myPlace.address!=DEFAULT_ADDRESS) {
+		    		dialMsg += "BeerMapping: ";
+		    		if (hasBM) dialMsg += "Loaded successfully.";
+		    		else dialMsg += "Not loaded properly.\n";
+		    	}
+		    	showDialog("Beer loading complete", dialMsg);
 		    } else {
 		    	if (completeFlag) {
-		    		showDialog("Data loaded successfully", "Yahoo.com beers loaded into your map successfully!");
+		    		hasYahoo = true;
 		    	} else {
-		    		showDialog("Problem loading data", "Not all Yahoo.com data was loaded properly...");
+		    		hasYahoo = false;
 		    	}
 		    }
 		}
