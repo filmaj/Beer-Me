@@ -1,3 +1,5 @@
-An Android app that projects your position along with the closest beer onto a Google map.
+An Android app that projects your position along with the closest beers onto a Google map.
 
-Uses YQL as a beer sniffer.
+Data sources include YQL and BeerMapping.com for bar/brewery/pub locations.
+
+Developed by Fil Maj of Nitobi (nitobi.com).
