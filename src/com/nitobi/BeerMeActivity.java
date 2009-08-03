@@ -182,9 +182,9 @@ public class BeerMeActivity extends MapActivity {
 		Toast.makeText(this, "Position updated.", Toast.LENGTH_SHORT).show();
     }
     /**
-     * Queries online services (Yahoo, BeerMapping soon...) for available beers close to current user location, and renders this information to UI.
+     * Queries online services (Yahoo, BeerMapping) for available beers close to current user location, and renders this information to UI.
      */
-    private void updateBeers() {
+	private void updateBeers() {
     	// Make the YQL request.
     	yql.setRequestURL("http://local.yahooapis.com/LocalSearchService/V3/localSearch?appid=MJLfQQ4i&query=beer&latitude=" + String.valueOf(myLat) + "&longitude=" + String.valueOf(myLng) + "&radius=" + String.valueOf(MAX_DISTANCE_M/1000) + "&output=xml");
 		try {
@@ -276,6 +276,16 @@ public class BeerMeActivity extends MapActivity {
 		}
 
 		public void onStatusChanged(String provider, int status, Bundle extras) {
+			switch (status) {
+				case 0:
+					Toast.makeText(BeerMeActivity.this, "The " + provider.toUpperCase() + " is out of service...", Toast.LENGTH_SHORT).show();
+					break;
+				case 1:
+					Toast.makeText(BeerMeActivity.this, "The " + provider.toUpperCase() + " is still searching for your position...", Toast.LENGTH_SHORT).show();
+					break;
+				case 2:
+					break;
+			}
 			Log.d(TAG, "Location provider ('" + provider + "') status changed to '" + (status==0?"OUT_OF_SERVICE":status==1?"TEMPORARILY_UNAVAILABLE":"AVAILABLE") + "'.");
 		}
 

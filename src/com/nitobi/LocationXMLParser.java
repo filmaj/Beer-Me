@@ -117,17 +117,16 @@ public class LocationXMLParser extends DefaultHandler
                 	obj.lat = this.currentLat;
                 	obj.lng = this.currentLon;
                 	// Construct an address string based on available address, city and state information.
-                	String finalAddressString = "";
+                	obj.address = "";
                 	if (this.currentState != null) {
-                		finalAddressString = this.currentState;
+                		obj.address = this.currentState;
                 	}
                 	if (this.currentCity != null) {
-                		finalAddressString = this.currentCity + ", " + finalAddressString;
+                		obj.address = this.currentCity + ", " + obj.address;
                 	}
                 	if (this.currentAddress != null)  {
-                		finalAddressString = this.currentAddress + "\n" + finalAddressString;
+                		obj.address = this.currentAddress + "\n" + obj.address;
                 	}
-                	obj.address = finalAddressString;
                 	if (this.currentPhone != null) {
                 		obj.phone = this.currentPhone;
                 	}
