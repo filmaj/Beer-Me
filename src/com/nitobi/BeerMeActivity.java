@@ -5,6 +5,8 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
@@ -53,8 +55,10 @@ public class BeerMeActivity extends MapActivity {
 	private boolean hasBM = false;
 	private boolean hasYahoo = false;
 	private boolean isRefreshing = false;
+	public boolean showAlert = true;
 	private GeoPoint myGeo;
 	private Place myPlace;
+	private Timer timer = new Timer();
 	private static final String TAG = "BeerMe";
 	private static final String DEFAULT_ADDRESS = "My position";
 	private static final int UPDATE_INTERVAL_MS = 120000;
@@ -102,7 +106,14 @@ public class BeerMeActivity extends MapActivity {
     	myPlace.lat = myLat;
         myPlace.lng = myLng;
         this.updateMyPosition();
+        // Set timer for clearing GPS notifications.
+        timer.schedule(new TimerTask() {
+        	public void run() {
+        		showAlert = true;
+        	}
+        }, 1000, 15000);
     	locationListener = new MyLocationListener();
+    	
     }
     /**
      * Shows a dialog message with an 'OK' button.
@@ -221,7 +232,7 @@ public class BeerMeActivity extends MapActivity {
 		}
 		// Refresh the screen.
 		barOverlay.refresh();
-		mapView.invalidate();
+		mapView.postInvalidate();
     }
     
 	@Override
@@ -276,15 +287,28 @@ public class BeerMeActivity extends MapActivity {
 		}
 
 		public void onStatusChanged(String provider, int status, Bundle extras) {
-			switch (status) {
+			if (showAlert) {
+				showAlert = false;
+				switch (status) {
 				case 0:
-					Toast.makeText(BeerMeActivity.this, "The " + provider.toUpperCase() + " is out of service...", Toast.LENGTH_SHORT).show();
+					Toast.makeText(
+							BeerMeActivity.this,
+							"The " + provider.toUpperCase()
+									+ " is out of service...",
+							Toast.LENGTH_SHORT).show();
 					break;
 				case 1:
-					Toast.makeText(BeerMeActivity.this, "The " + provider.toUpperCase() + " is still searching for your position...", Toast.LENGTH_SHORT).show();
+					Toast
+							.makeText(
+									BeerMeActivity.this,
+									"The "
+											+ provider.toUpperCase()
+											+ " is still searching for your position...",
+									Toast.LENGTH_SHORT).show();
 					break;
 				case 2:
 					break;
+				}
 			}
 			Log.d(TAG, "Location provider ('" + provider + "') status changed to '" + (status==0?"OUT_OF_SERVICE":status==1?"TEMPORARILY_UNAVAILABLE":"AVAILABLE") + "'.");
 		}
