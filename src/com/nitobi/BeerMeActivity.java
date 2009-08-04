@@ -65,6 +65,7 @@ public class BeerMeActivity extends MapActivity {
 	private static final int UPDATE_DISTANCE_M = 250;
 	private static final int MAX_DISTANCE_M = 20000;
 	private static final int MENU_CACHE_REFRESH = 0;
+	private static final int MENU_ABOUT = 1;
 	
     /** Called when the activity is first created. */
     @Override
@@ -252,18 +253,22 @@ public class BeerMeActivity extends MapActivity {
 	}
 	/* Creates the menu items */
 	public boolean onCreateOptionsMenu(Menu menu) {
-	    menu.add(0, MENU_CACHE_REFRESH, 0, "Refresh with cached location").setIcon(android.R.drawable.ic_menu_rotate);
+	    menu.add(0, MENU_CACHE_REFRESH, 0, R.string.menu_refresh).setIcon(android.R.drawable.ic_menu_rotate);
+	    menu.add(0, MENU_ABOUT, 1, R.string.menu_about).setIcon(android.R.drawable.ic_menu_info_details);
 	    return true;
 	}
 
 	/* Handles item selections */
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    switch (item.getItemId()) {
-	    case MENU_CACHE_REFRESH:
-	    	Location myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-	    	Log.d(TAG,"Retrieved cached location for cached refresh: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
-	    	refresh(myLocation);
-	        return true;
+	    	case MENU_CACHE_REFRESH:
+	    		Location myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+	    		Log.d(TAG,"Retrieved cached location for cached refresh: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
+	    		refresh(myLocation);
+	    		return true;
+	    	case MENU_ABOUT:
+	    		showDialog("About Beer Me","Developed by Fil Maj of Nitobi (www.nitobi.com)\n\nWe create web & mobile applications that deliver great user experiences.\n\nThanks to BeerMapping & Yahoo for providing awesome open data services!");
+	    		return true;
 	    }
 	    return false;
 	}
@@ -303,7 +308,7 @@ public class BeerMeActivity extends MapActivity {
 									BeerMeActivity.this,
 									"The "
 											+ provider.toUpperCase()
-											+ " is still searching for your position...",
+											+ " is searching for your position...",
 									Toast.LENGTH_SHORT).show();
 					break;
 				case 2:
