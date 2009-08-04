@@ -1,27 +1,23 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:id="@+id/layout_root"
-              android:orientation="vertical"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
-              android:padding="10dp"
-              >
-    <TextView android:id="@+id/address"
-              android:layout_width="fill_parent"
-              android:layout_height="wrap_content"
-              android:textColor="#FFF"
-              />
+    android:id="@+id/layout_root"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:padding="10dp">
+	<TextView android:id="@+id/address"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+    	android:textColor="#FFF"
+    />
     <TextView android:id="@+id/phone"
-              android:layout_width="fill_parent"
-              android:layout_height="wrap_content"
-              android:textColor="#FFF"
-              android:autoLink="phone"
-              android:textColorLink="#66CCFF"
-              />
-	<TextView android:id="@+id/link"
-              android:layout_width="fill_parent"
-              android:layout_height="wrap_content"
-              android:textColor="#FFF"
-              android:autoLink="web"
-              android:textColorLink="#66CCFF"
-              />
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#FFF"
+        android:autoLink="phone"
+        android:textColorLink="#66CCFF"
+    />
+    <Button android:id="@+id/link_btn"
+    	android:layout_width="wrap_content"
+    	android:layout_height="wrap_content"
+   	/>    		
 </LinearLayout>
