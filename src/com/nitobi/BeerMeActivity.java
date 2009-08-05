@@ -54,7 +54,7 @@ public class BeerMeActivity extends MapActivity {
 	private double myLng;
 	private boolean hasBM = false;
 	private boolean hasYahoo = false;
-	private boolean isRefreshing = false;
+	private boolean hasRefreshed = false;
 	public boolean showAlert = true;
 	private GeoPoint myGeo;
 	private Place myPlace;
@@ -162,8 +162,8 @@ public class BeerMeActivity extends MapActivity {
      * @param loc Location object specifying current user coordinates.
      */
     public void refresh(Location loc) {
-    	if (isRefreshing) return;
-    	isRefreshing = true;
+    	if (hasRefreshed) return;
+    	hasRefreshed = true;
     	myLat = loc.getLatitude();
     	myLng = loc.getLongitude();
     	myGeo = new GeoPoint((int)(myLat*1E6),(int)(myLng*1E6)); 
@@ -181,7 +181,6 @@ public class BeerMeActivity extends MapActivity {
 		}
     	this.updateMyPosition();
     	this.updateBeers();
-    	isRefreshing = false;
     }
     /**
      * Re-renders user position based on current user position.
@@ -262,6 +261,7 @@ public class BeerMeActivity extends MapActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    switch (item.getItemId()) {
 	    	case MENU_CACHE_REFRESH:
+	    		hasRefreshed = false;
 	    		Location myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 	    		Log.d(TAG,"Retrieved cached location for cached refresh: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
 	    		refresh(myLocation);
