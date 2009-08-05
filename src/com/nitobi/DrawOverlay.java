@@ -7,10 +7,13 @@ import com.google.android.maps.OverlayItem;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,7 +34,6 @@ public class DrawOverlay extends com.google.android.maps.ItemizedOverlay {
 
 	@Override
 	public int size() {
-		// TODO Auto-generated method stub
 		return mOverlays.size();
 	}
 	public void refresh() {
@@ -54,9 +56,8 @@ public class DrawOverlay extends com.google.android.maps.ItemizedOverlay {
 	}
 	@Override
 	public boolean onTap(int index) {
-		// Grab marker and place information.
-		OverlayItem marker = mOverlays.get(index);
-		Place place = mPlaces.get(index);
+		// Grab place information.
+		final Place place = mPlaces.get(index);
 		
 		// Build the dialog.
 		AlertDialog.Builder builder;
@@ -72,18 +73,24 @@ public class DrawOverlay extends com.google.android.maps.ItemizedOverlay {
 		} else {
 			textPhone.setVisibility(android.view.View.GONE);
 		}
-		TextView textLink = (TextView) layout.findViewById(R.id.link);
+		Button btnLink = (Button) layout.findViewById(R.id.link_btn);
 		if (place.reviewlink.length() > 0) {
 			String linkText = "";
 			if (place.isBeerMapping) {
-				linkText = "BeerMapping link: ";
+				linkText = "BeerMapping Review Page";
 			} else {
-				linkText = "Link: ";
+				linkText = "Web Site";
 			}
-			textLink.setVisibility(android.view.View.VISIBLE);
-			textLink.setText(linkText + place.reviewlink);
+			btnLink.setVisibility(android.view.View.VISIBLE);
+			btnLink.setText(linkText);
+			btnLink.setOnClickListener(new View.OnClickListener() {
+	             public void onClick(View v) {
+	            	 Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(place.reviewlink));
+	            	 mApp.startActivity(myIntent);
+	             }
+	        });
 		} else {
-			
+			btnLink.setVisibility(android.view.View.INVISIBLE);
 		}
 		builder = new AlertDialog.Builder(mApp);
 		builder.setTitle(place.name);

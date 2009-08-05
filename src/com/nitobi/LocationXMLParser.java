@@ -67,6 +67,7 @@ public class LocationXMLParser extends DefaultHandler
     	this.urlString = url;
     }
     public void parse() throws ParserConfigurationException, SAXException, IOException {
+    	this.clear();
     	if (this.urlString != null && this.urlString.length() > 0) {
 			InputStream urlInputStream = null;
 			SAXParserFactory spf = null;
@@ -196,5 +197,8 @@ public class LocationXMLParser extends DefaultHandler
     }
     public ArrayList<Place> getPlaces() {
     	return this.places;
+    }
+    private void clear() {
+    	this.places = new ArrayList<Place>();
     }
 }

@@ -5,6 +5,8 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
@@ -53,14 +55,17 @@ public class BeerMeActivity extends MapActivity {
 	private boolean hasBM = false;
 	private boolean hasYahoo = false;
 	private boolean isRefreshing = false;
+	public boolean showAlert = true;
 	private GeoPoint myGeo;
 	private Place myPlace;
+	private Timer timer = new Timer();
 	private static final String TAG = "BeerMe";
 	private static final String DEFAULT_ADDRESS = "My position";
 	private static final int UPDATE_INTERVAL_MS = 120000;
 	private static final int UPDATE_DISTANCE_M = 250;
 	private static final int MAX_DISTANCE_M = 20000;
 	private static final int MENU_CACHE_REFRESH = 0;
+	private static final int MENU_ABOUT = 1;
 	
     /** Called when the activity is first created. */
     @Override
@@ -102,7 +107,14 @@ public class BeerMeActivity extends MapActivity {
     	myPlace.lat = myLat;
         myPlace.lng = myLng;
         this.updateMyPosition();
+        // Set timer for clearing GPS notifications.
+        timer.schedule(new TimerTask() {
+        	public void run() {
+        		showAlert = true;
+        	}
+        }, 1000, 15000);
     	locationListener = new MyLocationListener();
+    	
     }
     /**
      * Shows a dialog message with an 'OK' button.
@@ -221,7 +233,7 @@ public class BeerMeActivity extends MapActivity {
 		}
 		// Refresh the screen.
 		barOverlay.refresh();
-		mapView.invalidate();
+		mapView.postInvalidate();
     }
     
 	@Override
@@ -241,18 +253,22 @@ public class BeerMeActivity extends MapActivity {
 	}
 	/* Creates the menu items */
 	public boolean onCreateOptionsMenu(Menu menu) {
-	    menu.add(0, MENU_CACHE_REFRESH, 0, "Refresh with cached location").setIcon(android.R.drawable.ic_menu_rotate);
+	    menu.add(0, MENU_CACHE_REFRESH, 0, R.string.menu_refresh).setIcon(android.R.drawable.ic_menu_rotate);
+	    menu.add(0, MENU_ABOUT, 1, R.string.menu_about).setIcon(android.R.drawable.ic_menu_info_details);
 	    return true;
 	}
 
 	/* Handles item selections */
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    switch (item.getItemId()) {
-	    case MENU_CACHE_REFRESH:
-	    	Location myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-	    	Log.d(TAG,"Retrieved cached location for cached refresh: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
-	    	refresh(myLocation);
-	        return true;
+	    	case MENU_CACHE_REFRESH:
+	    		Location myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+	    		Log.d(TAG,"Retrieved cached location for cached refresh: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
+	    		refresh(myLocation);
+	    		return true;
+	    	case MENU_ABOUT:
+	    		showDialog("About Beer Me","Developed by Fil Maj of Nitobi (www.nitobi.com)\n\nWe create web & mobile applications that deliver great user experiences.\n\nThanks to BeerMapping & Yahoo for providing awesome open data services!");
+	    		return true;
 	    }
 	    return false;
 	}
@@ -276,15 +292,28 @@ public class BeerMeActivity extends MapActivity {
 		}
 
 		public void onStatusChanged(String provider, int status, Bundle extras) {
-			switch (status) {
+			if (showAlert) {
+				showAlert = false;
+				switch (status) {
 				case 0:
-					Toast.makeText(BeerMeActivity.this, "The " + provider.toUpperCase() + " is out of service...", Toast.LENGTH_SHORT).show();
+					Toast.makeText(
+							BeerMeActivity.this,
+							"The " + provider.toUpperCase()
+									+ " is out of service...",
+							Toast.LENGTH_SHORT).show();
 					break;
 				case 1:
-					Toast.makeText(BeerMeActivity.this, "The " + provider.toUpperCase() + " is still searching for your position...", Toast.LENGTH_SHORT).show();
+					Toast
+							.makeText(
+									BeerMeActivity.this,
+									"The "
+											+ provider.toUpperCase()
+											+ " is searching for your position...",
+									Toast.LENGTH_SHORT).show();
 					break;
 				case 2:
 					break;
+				}
 			}
 			Log.d(TAG, "Location provider ('" + provider + "') status changed to '" + (status==0?"OUT_OF_SERVICE":status==1?"TEMPORARILY_UNAVAILABLE":"AVAILABLE") + "'.");
 		}
@@ -297,9 +326,10 @@ public class BeerMeActivity extends MapActivity {
 			boolean bmFlag = false;
 			try {
 				ArrayList<Place> response = params[0];
-				numBars = response.size();
+				int total = response.size();
+				numBars = total;
 				Log.d(TAG, "BeerDrawTask is beginning processing of " + String.valueOf(numBars) + " bars.");
-				for (int i = 0; i < numBars; i++) {
+				for (int i = 0; i < total; i++) {
 					Place curPlace = response.get(i);
 					bmFlag = curPlace.isBeerMapping;
 					if (bmFlag) {
@@ -310,7 +340,7 @@ public class BeerMeActivity extends MapActivity {
 						if (addies.size() == 0) {
 							// Skip if no geo-coding results.
 							Log.d(TAG,"No geo-coding results returned for last geo-code call.");
-							publishProgress(i,1, numBars);
+							publishProgress(i,1, total);
 							continue;
 						}
 						Address addy = addies.get(0);
@@ -318,13 +348,13 @@ public class BeerMeActivity extends MapActivity {
 						curPlace.lng = addy.getLongitude();
 					}
 					this.addBarIfClose(curPlace);
-					publishProgress(i,(int)(bmFlag?1:0), numBars);
+					publishProgress(i,(int)(bmFlag?1:0), total);
 				}
 				completeFlag = true;
 			} catch (Exception e) {
+				Log.d(TAG, "BeerDrawTask exception: " + e.getMessage());
 				completeFlag = false;
 				e.printStackTrace();
-				Log.d(TAG, "BeerDrawTask exception: " + e.getMessage());
 			}
 			return new boolean[]{completeFlag,bmFlag};
 		}
