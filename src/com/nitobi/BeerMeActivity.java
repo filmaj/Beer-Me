@@ -195,8 +195,6 @@ public class BeerMeActivity extends MapActivity {
      * @param loc Location object specifying current user coordinates.
      */
     public void refresh(Location loc) {
-    	if (hasRefreshed) return;
-    	hasRefreshed = true;
     	myLat = loc.getLatitude();
     	myLng = loc.getLongitude();
     	myGeo = new GeoPoint((int)(myLat*1E6),(int)(myLng*1E6)); 
@@ -213,6 +211,8 @@ public class BeerMeActivity extends MapActivity {
 			showDialog("Error determining your city and/or state","Could not determine current location name. Only one beer data source will be in use (no BeerMapping).");
 		}
     	this.updateMyPosition();
+    	if (hasRefreshed) return;
+    	hasRefreshed = true;
     	this.updateBeers();
     }
     /**
@@ -229,7 +229,7 @@ public class BeerMeActivity extends MapActivity {
      */
 	private void updateBeers() {
     	// Make the YQL request.
-    	yql.setRequestURL("http://local.yahooapis.com/LocalSearchService/V3/localSearch?appid=Get Your Own Key&query=beer&latitude=" + String.valueOf(myLat) + "&longitude=" + String.valueOf(myLng) + "&radius=" + String.valueOf(MAX_DISTANCE_M/1000) + "&output=xml");
+    	yql.setRequestURL("http://local.yahooapis.com/LocalSearchService/V3/localSearch?appid=MJLfQQ4i&query=beer&latitude=" + String.valueOf(myLat) + "&longitude=" + String.valueOf(myLng) + "&radius=" + String.valueOf(MAX_DISTANCE_M/1000) + "&output=xml");
 		try {
 			yql.parse();
 			ArrayList<Place> response = yql.getPlaces();
@@ -248,7 +248,7 @@ public class BeerMeActivity extends MapActivity {
 		// Start the BeerMapping requests, if we were able to geo-code the name of user's state.
 		if (myPlace.address != DEFAULT_ADDRESS) {
 			try {
-				beerMapping.setRequestURL("http://beermapping.com/webservice/locstate/Get Your Own Key/" + URLEncoder.encode(myPlace.address, "UTF-8"));
+				beerMapping.setRequestURL("http://beermapping.com/webservice/locstate/33aac0960ce1fd70bd6e07191af96bd5/" + URLEncoder.encode(myPlace.address, "UTF-8"));
 				try {
 					beerMapping.parse();
 					ArrayList<Place> response = beerMapping.getPlaces();
