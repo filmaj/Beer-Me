@@ -56,8 +56,8 @@ public class LocationXMLParser extends DefaultHandler
         this.resultElementTag = resultEl;
         this.text = new StringBuilder();
         this.places = new ArrayList<Place>();
-        this.currentLat = 0;
-        this.currentLon = 0;
+        this.currentLat = Place.DEFAULT;
+        this.currentLon = Place.DEFAULT;
         this.currentPlace = null;
     }
     public void shouldParseBeerMapping(boolean should) {
@@ -90,8 +90,8 @@ public class LocationXMLParser extends DefaultHandler
     	// If it's a new 'result' element, reset the local variables.
         if (localName.equalsIgnoreCase(this.resultElementTag)) {
                 this.inResult = true;
-                this.currentLat = 0;
-                this.currentLon = 0;
+                this.currentLat = Place.DEFAULT;
+                this.currentLon = Place.DEFAULT;
                 this.currentPlace = null;
                 this.currentAddress = null;
                 this.currentCity = null;

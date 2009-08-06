@@ -61,6 +61,7 @@ public class BeerMeActivity extends MapActivity {
 	private Timer timer = new Timer();
 	private static final String TAG = "BeerMe";
 	private static final String DEFAULT_ADDRESS = "My position";
+	private static final String ME = "Me";
 	private static final int UPDATE_INTERVAL_MS = 120000;
 	private static final int UPDATE_DISTANCE_M = 250;
 	private static final int MAX_DISTANCE_M = 20000;
@@ -87,7 +88,7 @@ public class BeerMeActivity extends MapActivity {
     	myOverlay = new DrawOverlay(droid, this);
     	mapOverlays.add(myOverlay);
     	// Set static properties.
-    	myPlace = new Place("Me");
+    	myPlace = new Place(ME);
     	myPlace.isMe = true;
     	// Instantiate service XML parsers.
     	yql = new LocationXMLParser("title","address","city","state","phone","businessurl","latitude","longitude","result");
@@ -95,18 +96,8 @@ public class BeerMeActivity extends MapActivity {
     	beerMapping.shouldParseBeerMapping(true);
     	// Set location manager.
     	locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
-    	// Grab cached location.
-    	Location myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-    	Log.d(TAG,"Retrieved cached location for application startup: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
-    	// Do a reverse geo-coding call with current location to determine address / place name. Also will be used later by BeerMapping.
-    	coder = new Geocoder(this, Locale.getDefault());
-        // Call drawing with current location.
-    	myLat = myLocation.getLatitude();
-    	myLng = myLocation.getLongitude();
-    	myGeo = new GeoPoint((int)(myLat*1E6),(int)(myLng*1E6));
-    	myPlace.lat = myLat;
-        myPlace.lng = myLng;
-        this.updateMyPosition();
+    	// Load self position and existing Beer positions, if the app is simply re-loading.
+    	this.loadPlaces();
         // Set timer for clearing GPS notifications.
         timer.schedule(new TimerTask() {
         	public void run() {
@@ -115,6 +106,48 @@ public class BeerMeActivity extends MapActivity {
         }, 1000, 15000);
     	locationListener = new MyLocationListener();
     	
+    }
+    @Override
+    public Object onRetainNonConfigurationInstance() {
+        ArrayList<Place> thePlaces = new ArrayList<Place>();
+        ArrayList<Place> currentPlaces = this.barOverlay.getPlaces();
+        if (currentPlaces.size() > 0 && thePlaces.addAll(currentPlaces))
+        	if (thePlaces.add(new Place(this.myPlace.name, this.myPlace.address, this.myPlace.isMe, this.myPlace.isBeerMapping, this.myPlace.reviewlink, this.myPlace.phone, this.myPlace.lat, this.myPlace.lng)))
+        		return thePlaces;
+        	else
+        		return null;
+        else
+        	return null;
+    }
+    /**
+     * Grabs Places assembled in onRetainNonConfiguration and renders if they exist.
+     */
+    private void loadPlaces() {
+    	Object data = getLastNonConfigurationInstance();
+    	ArrayList<Place> places = null;
+    	if (data == null) {
+    		// Grab cached location.
+        	Location myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        	Log.d(TAG,"Retrieved cached location for application startup: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
+        	// Do a reverse geo-coding call with current location to determine address / place name. Also will be used later by BeerMapping.
+        	this.coder = new Geocoder(this, Locale.getDefault());
+            // Call drawing with current location.
+        	this.myLat = myLocation.getLatitude();
+        	this.myLng = myLocation.getLongitude();
+        	this.myGeo = new GeoPoint((int)(this.myLat*1E6),(int)(this.myLng*1E6));
+        	this.myPlace.lat = myLat;
+        	this.myPlace.lng = myLng;
+    	} else {
+    		this.hasRefreshed = true;
+    		places = (ArrayList<Place>)data;
+    		this.myPlace = places.remove(places.size()-1);
+    		this.myLat = this.myPlace.lat;
+    		this.myLng = this.myPlace.lng;
+    		this.myGeo = new GeoPoint((int)(this.myLat*1E6),(int)(this.myLng*1E6));
+    	}
+    	this.updateMyPosition();
+    	if (places!=null)
+    		new BeerDrawTask().execute(places);
     }
     /**
      * Shows a dialog message with an 'OK' button.
@@ -186,18 +219,17 @@ public class BeerMeActivity extends MapActivity {
      * Re-renders user position based on current user position.
      */
     private void updateMyPosition() {
-    	myOverlay.clear(false);
-    	myOverlay.addOverlay(new OverlayItem(myGeo, "Me", myPlace.address),myPlace);
-    	mapController.setCenter(myGeo);
-		mapController.setZoom(13);
-		Toast.makeText(this, "Position updated.", Toast.LENGTH_SHORT).show();
+    	this.myOverlay.clear(false);
+    	this.myOverlay.addOverlay(new OverlayItem(this.myGeo, this.ME, this.myPlace.address),this.myPlace);
+    	this.mapController.animateTo(this.myGeo);
+    	this.mapController.setZoom(13);
     }
     /**
      * Queries online services (Yahoo, BeerMapping) for available beers close to current user location, and renders this information to UI.
      */
 	private void updateBeers() {
     	// Make the YQL request.
-    	yql.setRequestURL("http://local.yahooapis.com/LocalSearchService/V3/localSearch?appid=GetYourOwnYahoo.comApiKey&query=beer&latitude=" + String.valueOf(myLat) + "&longitude=" + String.valueOf(myLng) + "&radius=" + String.valueOf(MAX_DISTANCE_M/1000) + "&output=xml");
+    	yql.setRequestURL("http://local.yahooapis.com/LocalSearchService/V3/localSearch?appid=Get Your Own Key&query=beer&latitude=" + String.valueOf(myLat) + "&longitude=" + String.valueOf(myLng) + "&radius=" + String.valueOf(MAX_DISTANCE_M/1000) + "&output=xml");
 		try {
 			yql.parse();
 			ArrayList<Place> response = yql.getPlaces();
@@ -216,7 +248,7 @@ public class BeerMeActivity extends MapActivity {
 		// Start the BeerMapping requests, if we were able to geo-code the name of user's state.
 		if (myPlace.address != DEFAULT_ADDRESS) {
 			try {
-				beerMapping.setRequestURL("http://beermapping.com/webservice/locstate/GetYourOwnBeerMapping.comApiKey/" + URLEncoder.encode(myPlace.address, "UTF-8"));
+				beerMapping.setRequestURL("http://beermapping.com/webservice/locstate/Get Your Own Key/" + URLEncoder.encode(myPlace.address, "UTF-8"));
 				try {
 					beerMapping.parse();
 					ArrayList<Place> response = beerMapping.getPlaces();
@@ -333,19 +365,28 @@ public class BeerMeActivity extends MapActivity {
 					Place curPlace = response.get(i);
 					bmFlag = curPlace.isBeerMapping;
 					if (bmFlag) {
-						// First thing we need to do is do a reverse geo-code call
-						// for each result from BeerMapping.
-						Log.d(TAG, "Doing a geo-coding call for address '" + curPlace.address.replace("\n", ", ") + "'.");
-						List<Address> addies = coder.getFromLocationName(curPlace.address.replace("\n", ", "), 1);
-						if (addies.size() == 0) {
-							// Skip if no geo-coding results.
-							Log.d(TAG,"No geo-coding results returned for last geo-code call.");
-							publishProgress(i,1, total);
-							continue;
+						// Check if lat/lng needs to be set, or was already set.
+						if (curPlace.lat == Place.DEFAULT && curPlace.lng == Place.DEFAULT) {
+							// First thing we need to do is do a reverse
+							// geo-code call
+							// for each result from BeerMapping.
+							Log.d(TAG, "Doing a geo-coding call for address '"
+									+ curPlace.address.replace("\n", ", ")
+									+ "'.");
+							List<Address> addies = coder.getFromLocationName(
+									curPlace.address.replace("\n", ", "), 1);
+							if (addies.size() == 0) {
+								// Skip if no geo-coding results.
+								Log.d(TAG, "No geo-coding results returned for last geo-code call.");
+								publishProgress(i, 1, total);
+								continue;
+							}
+							Address addy = addies.get(0);
+							curPlace.lat = addy.getLatitude();
+							curPlace.lng = addy.getLongitude();
+						} else {
+							
 						}
-						Address addy = addies.get(0);
-						curPlace.lat = addy.getLatitude();
-						curPlace.lng = addy.getLongitude();
 					}
 					this.addBarIfClose(curPlace);
 					publishProgress(i,(int)(bmFlag?1:0), total);

@@ -101,4 +101,11 @@ public class DrawOverlay extends com.google.android.maps.ItemizedOverlay {
 		alertDialog.show();
 		return true;
 	}
+	/**
+	 * Returns the associated list of places.
+	 * @return The associated list of places.
+	 */
+	public ArrayList<Place> getPlaces() {
+		return new ArrayList<Place>(this.mPlaces);
+	}
 }
