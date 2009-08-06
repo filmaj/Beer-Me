@@ -9,6 +9,6 @@
     	android:layout_width="fill_parent"
     	android:layout_height="fill_parent"
     	android:clickable="true"
-    	android:apiKey="0sDOV0eIqZ9lSdg3IaZeNlw-nbsc2PgzZo856zA"
+    	android:apiKey="Get Your Own Google Maps Api Key!"
 	/>
 </RelativeLayout>
