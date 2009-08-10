@@ -16,7 +16,6 @@ import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -29,8 +28,6 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -109,6 +106,11 @@ public class BeerMeActivity extends MapActivity {
     	
     }
     @Override
+    /**
+     * This is called when the BeerMe activity is sent to the 'background' due to another phone event - call, SMS, whatever.
+     * We grab the parsed places and set it all up in an array list. We then push the user's position as the last place onto this object.
+     * The returned object will be retrieved and, if not null, parsed in the loadPlaces method.
+     */
     public Object onRetainNonConfigurationInstance() {
         ArrayList<Place> thePlaces = new ArrayList<Place>();
         ArrayList<Place> currentPlaces = this.barOverlay.getPlaces();
@@ -121,7 +123,7 @@ public class BeerMeActivity extends MapActivity {
         	return null;
     }
     /**
-     * Grabs Places assembled in onRetainNonConfiguration and renders if they exist.
+     * Grabs Places assembled in onRetainNonConfiguration and renders if they exist. Also renders user's position.
      */
     private void loadPlaces() {
     	Object data = getLastNonConfigurationInstance();
@@ -274,11 +276,17 @@ public class BeerMeActivity extends MapActivity {
 		return false;
 	}
 	@Override
+	/**
+	 * Called when activity is resume. We hook the location listener back to the GPS location manager.
+	 */
 	public void onResume() {
 		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, UPDATE_INTERVAL_MS, UPDATE_DISTANCE_M, locationListener);
 		super.onResume();
 	}
 	@Override
+	/**
+	 * Called when activity is paused. We remove a listener on user's location.
+	 */
 	public void onPause() {
 		locationManager.removeUpdates(locationListener);
 		super.onPause();
@@ -305,8 +313,10 @@ public class BeerMeActivity extends MapActivity {
 	    }
 	    return false;
 	}
+	/**
+	 * Called when the configuration change hooks (defined in the manifest) are detected. We just call super with the new config to make sure our app isn't reloaded. 
+	 */
 	public void onConfigurationChanged(Configuration newConfig) {
-      //don't reload everything!
       super.onConfigurationChanged(newConfig);
     } 
 	/**
