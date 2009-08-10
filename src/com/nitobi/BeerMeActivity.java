@@ -20,6 +20,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
@@ -229,7 +230,7 @@ public class BeerMeActivity extends MapActivity {
      */
 	private void updateBeers() {
     	// Make the YQL request.
-    	yql.setRequestURL("http://local.yahooapis.com/LocalSearchService/V3/localSearch?appid=MJLfQQ4i&query=beer&latitude=" + String.valueOf(myLat) + "&longitude=" + String.valueOf(myLng) + "&radius=" + String.valueOf(MAX_DISTANCE_M/1000) + "&output=xml");
+    	yql.setRequestURL("http://local.yahooapis.com/LocalSearchService/V3/localSearch?appid=Get Your Own Key&query=beer&latitude=" + String.valueOf(myLat) + "&longitude=" + String.valueOf(myLng) + "&radius=" + String.valueOf(MAX_DISTANCE_M/1000) + "&output=xml");
 		try {
 			yql.parse();
 			ArrayList<Place> response = yql.getPlaces();
@@ -248,7 +249,7 @@ public class BeerMeActivity extends MapActivity {
 		// Start the BeerMapping requests, if we were able to geo-code the name of user's state.
 		if (myPlace.address != DEFAULT_ADDRESS) {
 			try {
-				beerMapping.setRequestURL("http://beermapping.com/webservice/locstate/33aac0960ce1fd70bd6e07191af96bd5/" + URLEncoder.encode(myPlace.address, "UTF-8"));
+				beerMapping.setRequestURL("http://beermapping.com/webservice/locstate/Get Your Own Key/" + URLEncoder.encode(myPlace.address, "UTF-8"));
 				try {
 					beerMapping.parse();
 					ArrayList<Place> response = beerMapping.getPlaces();
@@ -304,6 +305,10 @@ public class BeerMeActivity extends MapActivity {
 	    }
 	    return false;
 	}
+	public void onConfigurationChanged(Configuration newConfig) {
+      //don't reload everything!
+      super.onConfigurationChanged(newConfig);
+    } 
 	/**
 	 * Simple implementation of a Location listener, does some basic logging and refreshes app.
 	 * @author Fil Maj
