@@ -359,9 +359,7 @@ public class BeerMeActivity extends MapActivity {
 					Toast
 							.makeText(
 									BeerMeActivity.this,
-									"The "
-											+ provider.toUpperCase()
-											+ " is searching for your position...",
+									R.string.searching,
 									Toast.LENGTH_SHORT).show();
 					break;
 				case 2:

@@ -5,4 +5,5 @@
 
 <string name="menu_refresh">Refresh Beers</string>
 <string name="menu_about">About</string>
+<string name="searching">Trying to lock on your position...</string>
 </resources>
