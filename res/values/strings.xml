@@ -3,6 +3,6 @@
     
     <string name="app_name">Beer Me</string>
 
-<string name="menu_refresh">Get beers (w/ current location)</string>
+<string name="menu_refresh">Refresh Beers</string>
 <string name="menu_about">About</string>
 </resources>

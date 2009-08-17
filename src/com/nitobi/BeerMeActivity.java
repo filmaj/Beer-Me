@@ -90,7 +90,7 @@ public class BeerMeActivity extends MapActivity {
     	myPlace.isMe = true;
     	// Instantiate service XML parsers.
     	yql = new LocationXMLParser("title","address","city","state","phone","businessurl","latitude","longitude","result");
-    	beerMapping = new LocationXMLParser("name","street","city","state","phone","reviewlink","latitude","longitude","location");
+    	beerMapping = new LocationXMLParser("name","street","city","state","phone","reviewlink","lat","lng","location");
     	beerMapping.shouldParseBeerMapping(true);
     	// Set location manager.
     	locationManager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
@@ -128,9 +128,10 @@ public class BeerMeActivity extends MapActivity {
     private void loadPlaces() {
     	Object data = getLastNonConfigurationInstance();
     	ArrayList<Place> places = null;
+    	Location myLocation;
     	if (data == null) {
     		// Grab cached location.
-        	Location myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        	myLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         	Log.d(TAG,"Retrieved cached location for application startup: " + myLocation.getLatitude() + ", " + myLocation.getLongitude());
         	// Do a reverse geo-coding call with current location to determine address / place name. Also will be used later by BeerMapping.
         	this.coder = new Geocoder(this, Locale.getDefault());
@@ -149,8 +150,9 @@ public class BeerMeActivity extends MapActivity {
     		this.myGeo = new GeoPoint((int)(this.myLat*1E6),(int)(this.myLng*1E6));
     	}
     	this.updateMyPosition();
-    	if (places!=null)
-    		new BeerDrawTask().execute(places);
+    	if (places!=null) new BeerDrawTask().execute(places);
+    	else this.updateBeers();
+    		
     }
     /**
      * Shows a dialog message with an 'OK' button.
@@ -250,19 +252,23 @@ public class BeerMeActivity extends MapActivity {
 		}
 		// Start the BeerMapping requests, if we were able to geo-code the name of user's state.
 		if (myPlace.address != DEFAULT_ADDRESS) {
+			beerMapping
+					.setRequestURL("http://beermapping.com/webservice/locgeo/Get Your Own Key/"
+							+ String.valueOf(myLat)
+							+ ","
+							+ String.valueOf(myLng)
+							+ ","
+							+ String.valueOf(MAX_DISTANCE_M / 1609));
 			try {
-				beerMapping.setRequestURL("http://beermapping.com/webservice/locstate/Get Your Own Key/" + URLEncoder.encode(myPlace.address, "UTF-8"));
-				try {
-					beerMapping.parse();
-					ArrayList<Place> response = beerMapping.getPlaces();
-					new BeerDrawTask().execute(response);
-				} catch (Exception e) {
-					Log.d(TAG, "Exception caught in BeerMapping beer parsing, message: " + e.getMessage());
-					showDialog("Problem retrieving data","There was a problem retrieving data from BeerMapping. ");
-				}
-			} catch (UnsupportedEncodingException e) {
-				Log.d(TAG, "Problem encoding current user's state.");
-				showDialog("Cannot encode state name","There was a problem encoding your current state's name for data retrieval from BeerMapping. We can't retrieve beer info for you. Sorry :(");
+				beerMapping.parse();
+				ArrayList<Place> response = beerMapping.getPlaces();
+				new BeerDrawTask().execute(response);
+			} catch (Exception e) {
+				Log.d(TAG,
+						"Exception caught in BeerMapping beer parsing, message: "
+								+ e.getMessage());
+				showDialog("Problem retrieving data",
+						"There was a problem retrieving data from BeerMapping. ");
 			}
 		}
 		// Refresh the screen.
@@ -331,7 +337,7 @@ public class BeerMeActivity extends MapActivity {
 		}
 
 		public void onProviderDisabled(String provider) {
-			Toast.makeText(BeerMeActivity.this, "Your location provider ('" + provider + "') has been disabled.", Toast.LENGTH_LONG).show();
+			Toast.makeText(BeerMeActivity.this, "Your location provider ('" + provider + "') is disabled - cannot retrieve your location.", Toast.LENGTH_LONG).show();
 		}
 
 		public void onProviderEnabled(String provider) {
@@ -382,9 +388,7 @@ public class BeerMeActivity extends MapActivity {
 					if (bmFlag) {
 						// Check if lat/lng needs to be set, or was already set.
 						if (curPlace.lat == Place.DEFAULT && curPlace.lng == Place.DEFAULT) {
-							// First thing we need to do is do a reverse
-							// geo-code call
-							// for each result from BeerMapping.
+							// If there are no lat/lng coordinates, we can run a reverse geo-coding call on the address to a Google service to find out.
 							Log.d(TAG, "Doing a geo-coding call for address '"
 									+ curPlace.address.replace("\n", ", ")
 									+ "'.");
