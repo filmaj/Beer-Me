@@ -59,7 +59,7 @@ public class DrawOverlay extends com.google.android.maps.ItemizedOverlay {
 		
 		// Build the dialog.
 		AlertDialog.Builder builder;
-		AlertDialog alertDialog;
+		final AlertDialog alertDialog;
 		LayoutInflater inflater = (LayoutInflater) mApp.getSystemService(android.content.Context.LAYOUT_INFLATER_SERVICE);
 		View layout = inflater.inflate(R.layout.place_dialog, (ViewGroup) mApp.findViewById(R.id.layout_root));
 		TextView textAddress = (TextView) layout.findViewById(R.id.address);
@@ -75,7 +75,7 @@ public class DrawOverlay extends com.google.android.maps.ItemizedOverlay {
 		if (place.reviewlink.length() > 0) {
 			String linkText = "";
 			if (place.isBeerMapping) {
-				linkText = "BeerMapping Review Page";
+				linkText = "Reviews";
 			} else {
 				linkText = "Web Site";
 			}
@@ -93,7 +93,14 @@ public class DrawOverlay extends com.google.android.maps.ItemizedOverlay {
 		builder = new AlertDialog.Builder(mApp);
 		builder.setTitle(place.name);
 		builder.setView(layout);
+		builder.setIcon(R.drawable.beericon);
 		alertDialog = builder.create();
+		Button btnClose = (Button) layout.findViewById(R.id.close_btn);
+		btnClose.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				alertDialog.dismiss();
+			}
+		});
 		// Show dialog.
 		alertDialog.setOwnerActivity(mApp);
 		alertDialog.show();

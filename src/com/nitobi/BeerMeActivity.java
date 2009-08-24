@@ -158,8 +158,9 @@ public class BeerMeActivity extends MapActivity {
      * Shows a dialog message with an 'OK' button.
      * @param title The dialog's title text.
      * @param message The dialog's message text.
+     * @param icon Drawable to use as an icon. Use -1 to use default.
      */
-    private void showDialog(String title, String message) {
+    private void showDialog(String title, String message, int icon) {
         AlertDialog ad = new AlertDialog.Builder(this).create();
         ad.setButton("OK", new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
@@ -167,6 +168,7 @@ public class BeerMeActivity extends MapActivity {
         } });
         ad.setTitle(title);
         ad.setMessage(message);
+        if (icon != -1) ad.setIcon(icon);
         ad.show();
     }
     /**
@@ -213,7 +215,7 @@ public class BeerMeActivity extends MapActivity {
 		} catch (Exception e) {
 			myPlace.address = DEFAULT_ADDRESS;
 			Log.d(TAG,e.getMessage());
-			showDialog("Error determining your city and/or state","Could not determine current location name. Only one beer data source will be in use (no BeerMapping).");
+			showDialog("Error determining your city and/or state","Could not determine current location name. Only one beer data source will be in use (no BeerMapping).",-1);
 		}
     	this.updateMyPosition();
     	if (hasRefreshed) return;
@@ -234,7 +236,7 @@ public class BeerMeActivity extends MapActivity {
      */
 	private void updateBeers() {
     	// Make the YQL request.
-    	yql.setRequestURL("http://local.yahooapis.com/LocalSearchService/V3/localSearch?appid=Get Your Own Key&query=beer&latitude=" + String.valueOf(myLat) + "&longitude=" + String.valueOf(myLng) + "&radius=" + String.valueOf(MAX_DISTANCE_M/1000) + "&output=xml");
+    	yql.setRequestURL("http://local.yahooapis.com/LocalSearchService/V3/localSearch?appid=MJLfQQ4i&query=beer&latitude=" + String.valueOf(myLat) + "&longitude=" + String.valueOf(myLng) + "&radius=" + String.valueOf(MAX_DISTANCE_M/1000) + "&output=xml");
 		try {
 			yql.parse();
 			ArrayList<Place> response = yql.getPlaces();
@@ -245,15 +247,15 @@ public class BeerMeActivity extends MapActivity {
 		} catch (Exception e) {
 			Log.d(TAG,"Exception caught in YQL beer parsing, message: " + e.getMessage());
 			if (myPlace.address!=DEFAULT_ADDRESS) {
-				showDialog("Problem retrieving data","There was a problem retrieving data from Yahoo. Loading data from BeerMapping...");
+				showDialog("Problem retrieving data","There was a problem retrieving data from Yahoo. Loading data from BeerMapping...",-1);
 			} else {
-				showDialog("Problem retrieving data","There was a problem retrieving data from Yahoo. We can't retrieve beer info for you. Sorry, try again later? :(");
+				showDialog("Problem retrieving data","There was a problem retrieving data from Yahoo. We can't retrieve beer info for you. Sorry, try again later? :(",-1);
 			}
 		}
 		// Start the BeerMapping requests, if we were able to geo-code the name of user's state.
 		if (myPlace.address != DEFAULT_ADDRESS) {
 			beerMapping
-					.setRequestURL("http://beermapping.com/webservice/locgeo/Get Your Own Key/"
+					.setRequestURL("http://beermapping.com/webservice/locgeo/33aac0960ce1fd70bd6e07191af96bd5/"
 							+ String.valueOf(myLat)
 							+ ","
 							+ String.valueOf(myLng)
@@ -267,8 +269,7 @@ public class BeerMeActivity extends MapActivity {
 				Log.d(TAG,
 						"Exception caught in BeerMapping beer parsing, message: "
 								+ e.getMessage());
-				showDialog("Problem retrieving data",
-						"There was a problem retrieving data from BeerMapping. ");
+				showDialog("Problem retrieving data", "There was a problem retrieving data from BeerMapping. ",-1);
 			}
 		}
 		// Refresh the screen.
@@ -314,7 +315,7 @@ public class BeerMeActivity extends MapActivity {
 	    		refresh(myLocation);
 	    		return true;
 	    	case MENU_ABOUT:
-	    		showDialog("About Beer Me","Developed by Fil Maj of Nitobi (www.nitobi.com)\n\nWe create web & mobile applications that deliver great user experiences.\n\nThanks to BeerMapping & Yahoo for providing awesome open data services!");
+	    		showDialog("About Beer Me","Developed by Fil Maj of Nitobi (www.nitobi.com)\n\nWe create web & mobile applications that deliver great user experiences.\n\nThanks to BeerMapping & Yahoo for providing awesome open data services!",-1); // TODO: add a nitobi icon here.
 	    		return true;
 	    }
 	    return false;
@@ -445,7 +446,7 @@ public class BeerMeActivity extends MapActivity {
 		    		if (hasBM) dialMsg += "Loaded successfully.";
 		    		else dialMsg += "Not loaded properly.";
 		    	}
-		    	showDialog("Beer loading complete", dialMsg);
+		    	showDialog("Beer loading complete", dialMsg,-1);
 		    } else {
 		    	if (completeFlag) {
 		    		hasYahoo = true;
