@@ -1,56 +1,37 @@
 // Beer Me JS code.
 var BeerMe = {
+	/**
+	 * init: grabs GPS location using PhoneGap API and initializes data requests
+	 *   with our data sources.
+	 */
 	init:function() {
+		BeerMe.updateLocation();
 	},
+	/**
+	 * disableRefresh: disables the refresh button.
+	 */
 	disableRefresh:function() {
 		var btn = document.getElementById('refreshBtn');
 		btn.disabled = true;
 		btn.innerHTML = 'Refreshing...';
 	},
+	/**
+	 * enableRefresh: enables the refresh button.
+	 */
 	enableRefresh:function() {
 		var btn = document.getElementById('refreshBtn');
 		btn.disabled = false;
 		btn.innerHTML = 'Refresh location';
 	},
 	updateLocation:function() {
-		BeerMe.map.clearOverlays();
 		BeerMe.disableRefresh();
-		var suc = function(p) {
-			var point = new GLatLng(p.coords.latitude, p.coords.longitude);
-			// Draw my position.
-			BeerMe.myMarker.setLatLng(point);
-			BeerMe.map.addOverlay(BeerMe.myMarker);
-			// Set map center.
-			BeerMe.map.setCenter(point, 12);
-			// Call for YQL data.
-			BeerMe.beerUpdate(p.coords.latitude, p.coords.longitude);
-			BeerMe.enableRefresh();
+		var win = function(position) {
 		};
-		var die = function() {
-			document.getElementById('refreshBtn').innerHTML = 'GPS is unavailable';
-			alert('GPS Failure! Please enable GPS to be able to use Beer Me.');
+		var fail = function(message) {
 		};
-		//navigator.geolocation.getCurrentPosition(suc,die);
-		var p = {coords:{latitude:49.3,longitude:-123.4}};
-		suc(p);
+		navigator.geolocation.getCurrentPosition(win, fail);
 	},
 	getBeerFromBeerMapping:function(lat,lng) {
-		function createBMBeerMarker(node) {
-			var beerMarker = new GMarker(new GLatLng(0,0), BeerMe.beerMarkerOptions);
-			GEvent.addListener(beerMarker, "click", function() {
-				var myHtml = "<b>" + node.Title + "</b><br/>";
-				myHtml += node.Street + "<br/>";
-				myHtml += node.City + ", " + node.State + "<br/>";
-				if (node.Phone.length > 0) {
-					myHtml += "Phone: " + node.Phone + "<br/>";
-				}
-				if (node.URL.length > 0) {
-					myHtml += '<a href="' + node.URL + '" target="_blank">Link to BeerMapping Reviews</a>';
-				}
-				beerMarker.openInfoWindowHtml(myHtml);
-			});
-			return beerMarker;
-		};
 		var cb_GeoCoderReverse = function(response) {
 			// Calback for retrieving geographic information about current location.
 			// TODO: Handle status code 602: Unknown area.
