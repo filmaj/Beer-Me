@@ -1,0 +1,44 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+  "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta name="viewport" content="width=320; user-scalable=no" />
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>PhoneGap</title>
+	  <link rel="stylesheet" href="master.css" type="text/css" media="screen" title="no title" charset="utf-8">
+	  <script type="text/javascript" charset="utf-8" src="phonegap.js"></script>
+	  <script src="http://maps.google.com/maps?file=api&v=2&key=ABQIAAAASWkdhwcFZHCle_XL8gNI0hQQPTIxowtQGbc0PVHZZ3XLXr5GBhRKV3t_-63J9ZAJ2bYu3zsQdR9N-A&sensor=true" type="text/javascript"></script>
+	  <script type="text/javascript" src="yql_js_widget.js"></script>
+	  <script type="text/javascript" src="beerme.js"></script>
+	  <script type="text/javascript" charset="utf-8">
+	// Geolocation code shamelessly stolen from Movable Type scripts: http://www.movable-type.co.uk/scripts/latlong.html
+	LatLon.distCosineLaw = function(lat1, lon1, lat2, lon2) {
+		var R = 6371; // earth's mean radius in km
+		var d = Math.acos(Math.sin(lat1.toRad())*Math.sin(lat2.toRad()) +
+			Math.cos(lat1.toRad())*Math.cos(lat2.toRad())*Math.cos((lon2-lon1).toRad())) * R;
+		return d;
+	};
+	function LatLon(lat, lon) {
+		this.lat = lat;
+		this.lon = lon;
+	}
+	Number.prototype.toRad = function() {  // convert degrees to radians
+		return this * Math.PI / 180;
+	};
+    
+    function initialize() {
+    	BeerMe.map = new GMap2(document.getElementById("map_canvas"));
+    	BeerMe.map.addControl(new GLargeMapControl);
+    	BeerMe.geocoder = new GClientGeocoder();
+    	BeerMe.updateLocation();
+    }
+	  </script>
+  </head>
+  <body onload="/*TODO: Check for GPS/Internet availability.*/setTimeout('initialize()',2500)" onunload="GUnload()" id="stage" class="theme">
+  <div id="map_cont" style="width:100%;padding:2px;height:279px;">
+  	<div id="map_canvas" style="width:100%;height:100%;z-index:1;"></div>
+  </div>
+  <button id="refreshBtn" onclick="BeerMe.updateLocation();" style="width:100%;height:20px;">Refresh location</button>
+  <div id="widgetContainer" style="width:100%;height:120px;overflow-y:scroll;"></div>
+  </body>
+</html>
