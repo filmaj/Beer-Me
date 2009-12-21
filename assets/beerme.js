@@ -1,15 +1,7 @@
 // Beer Me JS code.
 var BeerMe = {
-	// Create our droid and beer marker icon
-	droidIcon:new GIcon(G_DEFAULT_ICON),
-	droidMarkerOptions:null,
-	beerIcon:new GIcon(G_DEFAULT_ICON),
-	beerMarkerOptions:null,
-	myMarkerInfo:document.createElement("div"),
-	myMarker:null,
-	beerMarkers:[],
-	map:null,
-	geocoder:null,
+	init:function() {
+	},
 	disableRefresh:function() {
 		var btn = document.getElementById('refreshBtn');
 		btn.disabled = true;
@@ -161,15 +153,18 @@ var BeerMe = {
 		BeerMe.getBeerFromBeerMapping(lat,lng);
 	}
 };
-BeerMe.droidIcon.image = "images/androidmarker.png";
-BeerMe.droidIcon.iconSize = new GSize(50,58);
-BeerMe.droidMarkerOptions = { icon:BeerMe.droidIcon };
-BeerMe.beerIcon.image = "images/beericon.png";
-BeerMe.beerIcon.iconSize = new GSize(40,45);
-BeerMe.beerMarkerOptions = { icon:BeerMe.beerIcon };
-BeerMe.myMarkerInfo.innerHTML = 'Your position';
-BeerMe.myMarker = new GMarker(new GLatLng(0,0), BeerMe.droidMarkerOptions);
-GEvent.addListener(BeerMe.myMarker, "click", function() {
-	var myHtml = "<b>Your position</b>";
-	BeerMe.myMarker.openInfoWindowHtml(myHtml);
-});
+
+// Geolocation code shamelessly stolen from Movable Type scripts: http://www.movable-type.co.uk/scripts/latlong.html
+LatLon.distCosineLaw = function(lat1, lon1, lat2, lon2) {
+	var R = 6371; // earth's mean radius in km
+	var d = Math.acos(Math.sin(lat1.toRad())*Math.sin(lat2.toRad()) +
+		Math.cos(lat1.toRad())*Math.cos(lat2.toRad())*Math.cos((lon2-lon1).toRad())) * R;
+	return d;
+};
+function LatLon(lat, lon) {
+	this.lat = lat;
+	this.lon = lon;
+}
+Number.prototype.toRad = function() {  // convert degrees to radians
+	return this * Math.PI / 180;
+};
