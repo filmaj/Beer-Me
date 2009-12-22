@@ -22,8 +22,8 @@ var BeerMe = {
 			// Call for beer data.
 			BeerMe.beerUpdate(BeerMe.myCoords.latitude,BeerMe.myCoords.longitude);
 		};
-		var fail = function(message) {
-			alert('Can\'t retrieve position.\nError: ' + message);
+		var fail = function(e) {
+			alert('Can\'t retrieve position.\nError: ' + e.message);
 		};
 		navigator.geolocation.getCurrentPosition(win, fail);
 	},
@@ -38,12 +38,17 @@ var BeerMe = {
 		var yqlQuery = "select * from local.search where radius=50 and latitude=" + lat + " and longitude=" + lng + " and query='beer'";
 		var insertEl = 'resultsContainer';
 		yqlWidget.push(yqlQuery, config, format, insertEl);
-		yqlWidget.render();
+		yqlWidget.render(BeerMe.parseBeers);
 	},
 	beerUpdate:function(lat,lng) {
 		BeerMe.beerMarkers = [];
 		BeerMe.getBeerFromYQL(lat,lng);
 		BeerMe.getBeerFromBeerMapping(lat,lng);
+	},
+	parseBeers:function(results) {
+		for (var i = 0; i < results.length; i++) {
+			var title = results[i].Title;
+		}
 	}
 };
 
