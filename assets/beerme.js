@@ -18,6 +18,7 @@ var BeerMe = {
 			// Call for static google maps data.
 			var url = "http://maps.google.com/maps/api/staticmap?center=" + BeerMe.myCoords.latitude + "," + BeerMe.myCoords.longitude + "&zoom=15&size=320x480&maptype=roadmap&key=ABQIAAAASWkdhwcFZHCle_XL8gNI0hQQPTIxowtQGbc0PVHZZ3XLXr5GBhRKV3t_-63J9ZAJ2bYu3zsQdR9N-A&sensor=true"
 			x$('#map').attr('src',url);
+			x$('#loadingScreen').setStyle('display','none');
 			// Call for beer data.
 			BeerMe.beerUpdate(BeerMe.myCoords.latitude,BeerMe.myCoords.longitude);
 		};
