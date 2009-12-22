@@ -53,39 +53,6 @@ yqlWidget = function() {
     	}
  
 	/************************************************************
-	* Method: Parse YQL Results
-	* Description: Using the result set, parse the YQL results
-	*			   into display mode
-	************************************************************/
-	var parseYQLResults = function(results){
-		//get first JSON node - use loop due to first node being an unknown object
-		var firstChild;
-		for (var child in results){
-			if (results.hasOwnProperty(child)){
-				firstChild = results[child];
-				break;
-			}
-		}
- 
-		//return data instantiation
-		var html = "";
- 
-		//loop through all YQL return elements and result replace regex
-		if (firstChild.length !== undefined){
-			//multiple results - array
-			for(var i = 0; i < firstChild.length; i++){
-				html += parseFormat(firstChild[i]);
-			}
-		} else {
-			//single result - object
-			html += parseFormat(firstChild);
-		}
- 
-		document.getElementById(queryInsert).innerHTML = html;
-		yqlWidget.render();
-	}
- 
-	/************************************************************
 	* Method: Parse Format
 	* Description: Loop through format array for provided
 	*              data set node
@@ -120,7 +87,7 @@ yqlWidget = function() {
 		},
  
 		//pop widget off the load stack and execute
-		render: function(){ if (widgetStack.length > 0){ widgetStack.pop()(); } },
+		render: function(fn){ if (widgetStack.length > 0){ fn(widgetStack.pop()()); } },
  
 		//widget initialization
 		init: function(query, config, format, insertEl){ 
@@ -135,7 +102,7 @@ yqlWidget = function() {
 				if (setupConfig['debug'] && window.console){ console.log('YQL query returned no results'); }
 				return null;
 			}
-			parseYQLResults(o.query.results);
+			return o.query.results.Result;
 		}
 	}
 }();
