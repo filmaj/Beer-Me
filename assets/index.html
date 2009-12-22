@@ -5,19 +5,22 @@
 		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
 		<title>Beer Me</title>
 		<link rel="stylesheet" href="master.css" type="text/css" media="screen" />
-		<script type="text/javascript" src="phonegap.js"></script>
 		<script type="text/javascript" src="yql_js_widget.js"></script>
 		<script type="text/javascript" src="xui-more-1.0.0.min.js"></script>
 		<script type="text/javascript" src="beerme.js"></script>
 		<script type="text/javascript">
 			function init() {
-				x$(window).touchmove(preventBehavior);
-				x$(window).on("deviceReady", BeerMe.init);
+				x$(window).touchmove(function(e) { e.preventBehavior() });
+				// This doesn't work right now - need to figure out why the event isn't dispatched.
+				//x$(window).on("deviceReady", BeerMe.init);
+				setTimeout(BeerMe.init,100);
 			}
 			x$(window).load(init);
 		</script>
+		<script type="text/javascript" src="phonegap.js"></script>
 	</head>
 	<body>
-		
+		<img id="map" />
+		<div id="resultsContainer"></div>
 	</body>
 </html>

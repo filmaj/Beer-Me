@@ -56,7 +56,7 @@ yqlWidget = function() {
 	* Method: Parse YQL Results
 	* Description: Using the result set, parse the YQL results
 	*			   into display mode
-	***********************************************************
+	************************************************************/
 	var parseYQLResults = function(results){
 		//get first JSON node - use loop due to first node being an unknown object
 		var firstChild;
@@ -66,10 +66,10 @@ yqlWidget = function() {
 				break;
 			}
 		}
-		
+ 
 		//return data instantiation
 		var html = "";
-		
+ 
 		//loop through all YQL return elements and result replace regex
 		if (firstChild.length !== undefined){
 			//multiple results - array
@@ -80,46 +80,11 @@ yqlWidget = function() {
 			//single result - object
 			html += parseFormat(firstChild);
 		}
-		
+ 
 		document.getElementById(queryInsert).innerHTML = html;
 		yqlWidget.render();
 	}
-	*/
-	var parseYQLResults = function(results){
-		var createBeerMarker = function(node) {
-			var beerMarker = new GMarker(new GLatLng(node.Latitude,node.Longitude), BeerMe.beerMarkerOptions);
-		    GEvent.addListener(beerMarker, "click", function() {
-		    	var myHtml = "<b>" + node.Title + "</b><br/>" + node.Address + "<br/>" + node.City;
-		    	beerMarker.openInfoWindowHtml(myHtml);
-		    });
-		    return beerMarker;
-		}
-		//get first JSON node - use loop due to first node being an unknown object
-		var firstChild;
-		for (var child in results){
-			if (results.hasOwnProperty(child)){
-				firstChild = results[child];
-				break;
-			}
-		}
-		//loop through all YQL return elements and result replace regex
-		if (firstChild.length !== undefined){
-			//multiple results - array
-			var Titles = [];
-			for(var i = 0; i < firstChild.length; i++){
-			    BeerMe.map.addOverlay(createBeerMarker(firstChild[i]));
-			}
-		} else {
-			//single result - object
-			var beerMarker = new GMarker(new GLatLng(firstChild[i].Latitude,firstChild[i].Longitude), beerMarkerOptions);
-		    GEvent.addListener(beerMarker, "click", function() {
-		    	var myHtml = "<b>" + firstChild[i].Title + "</b>";
-		    	beerMarker.openInfoWindowHtml(myHtml);
-		    });
-		    BeerMe.map.addOverlay(beerMarker);
-		}
-		yqlWidget.render();
-	}
+ 
 	/************************************************************
 	* Method: Parse Format
 	* Description: Loop through format array for provided
