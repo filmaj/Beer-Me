@@ -5,7 +5,7 @@
 * Copyright (c) 2009 Brian LeRoux, Rob Ellis, Brock Whitten
 * Licensed under the MIT license.
 *
-* Date: 2009-12-21T14:51:55-08:00
+* Date: 2010-02-13T23:24:07-08:00
 */
 
 (function () {
@@ -15,122 +15,152 @@ var undefined,
     window = this,
     // prevents Google compiler from removing primative and subsidising out allowing us to compress further
     string = new String('string'), 
-    document = window.document;
-
-window.x$ = window.xui = xui = function(q) {
-  return new xui.fn.find(q);
+    document = window.document,
+    idExpr = /^#([\w-]+)$/,
+    slice = [].slice;
+    
+window.x$ = window.xui = xui = function(q, context) {
+  return new xui.fn.find(q, context);
 };
 
 // patch in forEach to help get the size down a little and avoid over the top currying on event.js and dom.js (shortcuts)
-if (!Array.prototype.forEach) {
+if (![].forEach) {
   Array.prototype.forEach = function (fn) {
-    var len = this.length || 0;
-    if (typeof fn != 'function') {
-      return;
-    }
-    var that = arguments[1];
-    for (var i = 0; i < len; i++) {
-      fn.call(that, this[i], i, this);
+    var len = this.length || 0, that = arguments[1];
+    if (typeof fn == 'function') {
+      for (var i = 0; i < len; i++) {
+        fn.call(that, this[i], i, this);
+      }
     }
   };
 }
 
-xui.fn = xui.prototype = {
+/**
+* Array Remove - By John Resig (MIT Licensed) 
+*/
+function removex(array, from, to) {
+    var rest = array.slice((to || from) + 1 || array.length);
+    array.length = from < 0 ? array.length + from: from;
+    return array.push.apply(array, rest);
+}
 
-      elements: [],
+xui.fn = xui.prototype = {
       
       extend: function(o) {
-      	for (var i in o) {
-      		xui.prototype[i] = o[i];
-      	}
+        for (var i in o) {
+          xui.fn[i] = o[i];
+        }
       },
 
-      find: function(q) {
-          var ele = [], list, idExpr = /^#([\w-]+)$/, i, j, x;
-
-          // fast matching for pure ID selectors
-          if (typeof q == string && idExpr.test(q)) {
-              ele = [document.getElementById(q.substr(1))];
-          } else if (typeof q == string) {
-              // one selector
-              ele = Array.prototype.slice.call(document.querySelectorAll(q), 0);
+      find: function(q, context) {
+          var ele = [], list, i, j, x;
+          if (!q) {
+            return this;
+          } else if (context == undefined && this.length) {
+            this.each(function (el, i) {
+              ele = ele.concat(slice.call(xui(q, this)));
+            });
+            ele = this.reduce(ele);
           } else {
-			        // an element
-              ele = [q];
+            context = context || document;
+            
+            // fast matching for pure ID selectors
+            if (typeof q == string && idExpr.test(q)) {
+                ele = [context.getElementById(q.substr(1))];
+            } else if (typeof q == string) {
+                // one selector
+                ele = slice.call(context.querySelectorAll(q));
+            } else if (q.toString() === '[object Array]') {
+                ele = q;
+            } else {
+                // an element was passed in
+                ele = [q];
+            }
           }
-
-          this.elements = this.elements.concat(this.reduce(ele));
-          return this;
+          // disabling the append style, could be a plugin: 
+          // xui.fn.add = function (q) { this.elements = this.elements.concat(this.reduce(xui(q).elements)); return this; }
+          return this.set(ele);
       },
-
+      
+      /** 
+       * Resets the body of elements contained in XUI
+       * Note that due to the way this.length = 0 works
+       * if you do console.dir() you can still see the 
+       * old elements, but you can't access them. Confused?
+       */
+      set: function (elements) {
+        var ret = xui(); // this *really* doesn't feel right...
+        ret.cache = slice.call(this);
+        ret.length = 0;
+        [].push.apply(ret, elements);
+        return ret;
+      },
 
       /**
-	 * Array Unique
-	 */
-      reduce: function(el, b) {
-          var a = [];
-          
-          el.forEach(function (el) {
+        * Array Unique
+        */
+      reduce: function(elements, b) {
+          var a = [], elements = elements || slice.call(this);
+          elements.forEach(function (el) {
             // question the support of [].indexOf in older mobiles (RS will bring up 5800 to test)
             if (a.indexOf(el, 0, b) < 0)
                 a.push(el);            
           });
-          
+
           return a;
       },
-
-
+      
       /**
-	 * Array Remove - By John Resig (MIT Licensed) 
-	 */
-      removex: function(array, from, to) {
-          var rest = array.slice((to || from) + 1 || array.length);
-          array.length = from < 0 ? array.length + from: from;
-          return array.push.apply(array, rest);
-      },
-
-
-      /**
-	 * Has modifies the elements array and reurns all the elements that match (has) a CSS Query
-	 */
+       * Has modifies the elements array and reurns all the elements that match (has) a CSS Query
+       */
       has: function(q) {
-          var list = [];
-          this.each(function(el) {
-              xui(q).each(function(hel) {
-                  if (hel == el) {
-                      list.push(el);
-                  }
-              });
-          });
-          this.elements = list;
-          return this;
+        return this.filter(function () {
+          return !!xui(q, this).length;
+        });
+      },
+      
+      /**
+       * Both an internal utility function, but also allows developers to extend xui using custom filters
+       */
+      filter: function (fn) {
+        var elements = [];
+        return this.each(function (el, i) {
+          if (fn.call(el, i)) elements.push(el);
+        }).set(elements);
+      },
+
+      // supports easier conversion of jQuery plugins to XUI
+      end: function () {
+        return this.set(this.cache || []);
       },
 
 
-      /**
-	 * Not modifies the elements array and reurns all the elements that DO NOT match a CSS Query
-	 */
+     /**
+      * Not modifies the elements array and reurns all the elements that DO NOT match a CSS Query
+      */
       not: function(q) {
-          var list = this.elements, i;
-          for (i = 0; i < list.length; i++) {
-              xui(q).each(function(hel) {
-                  if (list[i] == hel) {
-                      this.elements = this.removex(list, list.indexOf(list[i]));
-                  }
-              });
-          }
-          return this;
+          var list = slice.call(this);
+
+          return this.filter(function (i) {
+            var found;
+            xui(q).each(function(el) {
+              return found = list[i] != el;
+            });
+            return found;
+          });
       },
 
 
-      /**
-	 * Element iterator.
-	 * 
-	 * @return {XUI} Returns the XUI object. 
-	 */
+     /**
+      * Element iterator.
+      * 
+      * @return {XUI} Returns the XUI object. 
+      */
       each: function(fn) {
-          for (var i = 0, len = this.elements.length; i < len; ++i) {
-              if (fn.call(this, this.elements[i]) === false)
+        // we could compress this by using [].forEach.call - but we wouldn't be able to support
+        // fn return false breaking the loop, a feature I quite like.
+          for (var i = 0, len = this.length; i < len; ++i) {
+              if (fn.call(this[i], this[i], i, this) === false)
                   break;
           }
           return this;
@@ -138,7 +168,7 @@ xui.fn = xui.prototype = {
 };
 
 xui.fn.find.prototype = xui.fn;
-	
+    
 xui.extend = xui.fn.extend;
 
   // --- 
@@ -247,7 +277,7 @@ xui.extend = xui.fn.extend;
             this.clean();
     
             if (arguments.length == 0) {
-                return this.elements[0].innerHTML;
+                return this[0].innerHTML;
             }
             if (arguments.length == 1 && arguments[0] != 'remove') {
                 html = location;
@@ -375,10 +405,9 @@ xui.extend = xui.fn.extend;
     	 *
     	 * Register callbacks to DOM events.
     	 * 
-    	 * @method
-    	 * @param {Event} The event identifier as a string.
-    	 * @param {Function} The callback function to invoke when the event is raised.
-    	 * @return {Element Collection}
+    	 * @param {Event} type The event identifier as a string.
+    	 * @param {Function} fn The callback function to invoke when the event is raised.
+    	 * @return self
     	 * @example
     	 * 
     	 * ### on
@@ -410,13 +439,10 @@ xui.extend = xui.fn.extend;
     	 * 	
     	 */
     	on: function(type, fn) {
-    	    var listen = function(el) {
-    	        if (window.addEventListener) {
-    	            el.addEventListener(type, fn, false);
-    	        }
-    	    };
     	    this.each(function(el) {
-    	        listen(el);
+            if (window.addEventListener) {
+                el.addEventListener(type, fn, false);
+            }
     	    });
     	    return this;
     	}
@@ -439,10 +465,9 @@ xui.extend = xui.fn.extend;
     	 *
     	 * Tween is a method for transforming a css property to a new value.
     	 * 
-    	 * @method
-    	 * @param {Object} [Array|Object]
-    	 * @param {Function} 
-    	 * @return {Element Collection}
+    	 * @param {Object} options [Array|Object]
+    	 * @param {Function} callback
+    	 * @return self
     	 * @example
     	 * 
     	 * ### tween
@@ -464,14 +489,12 @@ xui.extend = xui.fn.extend;
     	 * 	x$('#box').tween({ left:100px}).tween({ left:'100px' });
     	 * 
     	 */
-    	tween: function( options, opts ) {
+    	tween: function( options, callback ) {
     		// TODO make xui into emile options
     		// TODO make queue
-    		// TODO make chainable
-    		this.each(function(e){		
-    			emile(e, options, opts);
+    		return this.each(function(e){		
+    			emile(e, options, callback);
     		});
-    	    return this;
     	}
     //---
     });
@@ -487,16 +510,28 @@ xui.extend = xui.fn.extend;
      * 
      */
     (function () {
+    
+    function hasClass(el, className) {
+        return getClassRegEx(className).test(el.className);
+    }
+    
+    // Via jQuery - used to avoid el.className = ' foo';
+    // Used for trimming whitespace
+    var rtrim = /^(\s|\u00A0)+|(\s|\u00A0)+$/g;
+    
+    function trim(text) {
+      return (text || "").replace( rtrim, "" );
+    }
+    
     xui.extend({
     
         /**
     	 * 
     	 * Sets a single CSS property to a new value.
     	 * 
-    	 * @method
-    	 * @param {String} The property to set.
-    	 * @param {String} The value to set the property.
-    	 * @return {Element Collection}
+    	 * @param {String} prop The property to set.
+    	 * @param {String} val The value to set the property.
+    	 * @return self
     	 * @example
     	 *
     	 * ### setStyle
@@ -516,20 +551,18 @@ xui.extend = xui.fn.extend;
     	 * 
     	 */
         setStyle: function(prop, val) {
-            this.each(function(el) {
+            return this.each(function(el) {
                 el.style[prop] = val;
             });
-            return this;
         },
     
         /**
     	 * 
     	 * Retuns a single CSS property. Can also invoke a callback to perform more specific processing tasks related to the property value.
     	 * 
-    	 * @method
-    	 * @param {String} The property to retrieve.
-    	 * @param {Function} A callback function to invoke with the property value.
-    	 * @return {Element Collection}
+    	 * @param {String} prop The property to retrieve.
+    	 * @param {Function} callback A callback function to invoke with the property value.
+    	 * @return self if a callback is passed, otherwise the individual property requested
     	 * @example
     	 *
     	 * ### getStyle
@@ -557,22 +590,20 @@ xui.extend = xui.fn.extend;
             };
     
             if (callback === undefined) {
-                return gs(this.elements[0], prop);
+                return gs(this[0], prop);
             }
     
-            this.each(function(el) {
+            return this.each(function(el) {
                 callback(gs(el, prop));
             });
-            return this;
         },
     
         /**
     	 *
     	 * Adds the classname to all the elements in the collection. 
     	 * 
-    	 * @method
-    	 * @param {String} The class name.
-    	 * @return {Element Collection}
+    	 * @param {String} className The class name.
+    	 * @return self
     	 * @example
     	 *
     	 * ### addClass
@@ -591,27 +622,19 @@ xui.extend = xui.fn.extend;
     	 *
     	 */
         addClass: function(className) {
-            var that = this;
-            var hasClass = function(el, className) {
-                var re = getClassRegEx(className);
-                return re.test(el.className);
-            };
-    
-            this.each(function(el) {
+            return this.each(function(el) {
                 if (hasClass(el, className) === false) {
-                    el.className += ' ' + className;
+                  el.className = trim(el.className + ' ' + className);
                 }
             });
-            return this;
         },
         /**
     	 *
-    	 * Checks to see if classname is one the element
+    	 * Checks to see if classname is one the element. If a callback isn't passed, hasClass expects only one element in collection
     	 * 
-    	 * @method
-    	 * @param {String} The class name.
-    	 * @param {Function} A callback function (optional)
-    	 * @return {XUI Object - self} Chainable
+    	 * @param {String} className The class name.
+    	 * @param {Function} callback A callback function (optional)
+    	 * @return self if a callback is passed, otherwise true or false as to whether the element has the class
     	 * @example
     	 *
     	 * ### hasClass
@@ -632,30 +655,23 @@ xui.extend = xui.fn.extend;
     	 *
     	 */
         hasClass: function(className, callback) {
-            var that = this;
-    
-            if (callback === undefined && this.elements.length == 1) {
-                var re = getClassRegEx(className);
-                return re.test(that.elements[0].className);
+            if (callback === undefined && this.length == 1) {
+                return hasClass(this[0], this[0].className)
             }
     
-            this.each(function(el) {
-                var re = getClassRegEx(className);
-                if (re.test(el.className) == true) {
+            return this.each(function(el) {
+                if (hasClass(el, el.className)) {
                     callback(el);
                 }
             });
-    
-            return this;
         },
     
         /**
     	 *
     	 * Removes the classname from all the elements in the collection. 
     	 * 
-    	 * @method
-    	 * @param {String} The class name.
-    	 * @return {Element Collection}
+    	 * @param {String} className The class name.
+    	 * @return self
     	 * @example
     	 *
     	 * ### removeClass
@@ -681,7 +697,7 @@ xui.extend = xui.fn.extend;
             } else {
                 var re = getClassRegEx(className);
                 this.each(function(el) {
-                    el.className = el.className.replace(re, ' ');
+                    el.className = el.className.replace(re, '');
                 });
             }
             return this;
@@ -692,9 +708,8 @@ xui.extend = xui.fn.extend;
     	 *
     	 * Set a number of CSS properties at once.
     	 * 
-    	 * @method
-    	 * @param {Object} An object literal of CSS properties and corosponding values.
-    	 * @return {Element Collection}
+    	 * @param {Object} props An object literal of CSS properties and corosponding values.
+    	 * @return self
     	 * @example	
     	 *
     	 * ### css
@@ -714,12 +729,10 @@ xui.extend = xui.fn.extend;
     	 */
         css: function(o) {
             var that = this;
-            this.each(function(el) {
-                for (var prop in o) {
-                    that.setStyle(prop, o[prop]);
-                }
-            });
-            return this || that;
+            for (var prop in o) {
+                that.setStyle(prop, o[prop]);
+            }
+            return that;
         }
     // --
     });
@@ -761,11 +774,10 @@ xui.extend = xui.fn.extend;
     	 * This method has a few new tricks. It is always invoked on an element collection and follows the identical behaviour as the
     	 * `html` method. If there no callback is defined the response text will be inserted into the elements in the collection. 
     	 * 
-    	 * @method
-    	 * @param {location} [inner|outer|top|bottom|before|after]
-    	 * @param {String} The URL to request.
-    	 * @param {Object} The method options including a callback function to invoke when the request returns. 
-    	 * @return {Element Collection}
+    	 * @param {location} location [inner|outer|top|bottom|before|after]
+    	 * @param {String} url The URL to request.
+    	 * @param {Object} options The method options including a callback function to invoke when the request returns. 
+    	 * @return self
     	 * @example
     	 *	
     	 * ### xhr
@@ -809,30 +821,37 @@ xui.extend = xui.fn.extend;
     	 *	  x$('#left-panel').xhr('/panel', function(){ alert(this.responseText) }); 
     	 * 
     	 */
-    
         xhr:function(location, url, options) {
     
-            var o = options ? options : o;
+          // this is to keep support for the old syntax (easy as that)
+            if (!/^inner|outer|top|bottom|before|after$/.test(location)) {
+             	options = url;
+             	url = location;
+             	location = 'inner';
+            }
+    
+            var o = options ? options : {};
             
             if (typeof options == "function") {
                 o = {};
                 o.callback = options;
-            }
+            };
             
-            var that   = this;
-            var req    = new XMLHttpRequest();
-            var method = o.method || 'get';
-            var async  = o.async || false;            
-            var params = o.data || null;
+            var that   = this,
+            	req    = new XMLHttpRequest(),
+            	method = o.method || 'get',
+            	async  = o.async || false,           
+            	params = o.data || null;
     
             req.queryString = params;
             req.open(method, url, async);
     
-    		if (o.headers) {
+            if (o.headers) {
                 for (var i=0; i<o.headers.length; i++) {
                   req.setRequestHeader(o.headers[i].name, o.headers[i].value);
                 }
             }
+    
             req.onload = (o.callback != null) ? o.callback : function() { that.html(location, this.responseText); };
             req.send(params);
       	
@@ -846,15 +865,14 @@ xui.extend = xui.fn.extend;
     	 * Adds more DOM nodes to the existing element list.
     	 */
     	add: function(q) {
-    		this.find([q]);
-    		this.elements = this.reduce(this.elements);
-    		return this;
+    	  [].push.apply(this, [].slice.call(xui(q)));
+    	  return this.set(this.reduce());
     	},
     
     	/**
     	 * Returns the first element in the collection.
     	 * 
-    	 * @return {Element} Returns a single DOM element.
+    	 * @return Returns a single DOM element.
     	 */
     	first: function() {
     		return this.get(0);
@@ -864,10 +882,10 @@ xui.extend = xui.fn.extend;
     	 * Returns the element in the collection at the 
     	 * given index
     	 *
-    	 * @return {Element} Returns a single DOM element
+    	 * @return Returns a single DOM element
     	 * */
     	get: function(index) {
-    		return this.elements[index];
+    		return this[index];
     	},
     	
     	/**
@@ -876,23 +894,21 @@ xui.extend = xui.fn.extend;
     	 * */
     	eq: function(idx1,idx2) {
     		idx2 = idx2 ? idx2 + 1 : idx1 + 1;
-    		this.elements = this.elements.slice(idx1,idx2);
-    		return this;
+    		return this.set([].slice.call(this, idx1, idx2));
     	},
     
     	/**
     	 * Returns the size of the collection
     	 *
-    	 * @return {Number} Returns an integer size of collection
+    	 * @return Returns an integer size of collection (use xui.length instead)
     	 * */
     	size: function() {
-    		return this.elements.length;
+    		return this.length;
     	}
     // --	
     });	
     "inner outer top bottom remove before after".split(' ').forEach(function (method) {
-	  eval("var temp = {" + method + ": function (html) { return this.html('" + method + "', html); }}");
-      xui.extend(temp);
+      xui.fn[method] = function (html) { return this.html(method, html); };
     });
     // private event functions
     (function () {
@@ -915,10 +931,9 @@ xui.extend = xui.fn.extend;
     	 *
     	 * Register callbacks to DOM events.
     	 * 
-    	 * @method
-    	 * @param {Event} The event identifier as a string.
-    	 * @param {Function} The callback function to invoke when the event is raised.
-    	 * @return {Element Collection}
+    	 * @param {Event} type The event identifier as a string.
+    	 * @param {Function} callback The callback function to invoke when the event is raised.
+    	 * @return self
     	 * @example
     	 * 
     	 * ### on
@@ -1027,8 +1042,7 @@ xui.extend = xui.fn.extend;
     }
     
     "click load submit touchstart touchmove touchend touchcancel gesturestart gesturechange gestureend orientationchange".split(' ').forEach(function (event) {
-	  eval("var temp = {" + event + ": function (fn) { return fn ? this.on('" + event + "', fn) : this.fire('" + event + "'); }};");
-      xui.extend(temp);
+      xui.fn[event] = function (fn) { return fn ? this.on(event, fn) : this.fire(event); };
     });
     
     })();/**
@@ -1049,16 +1063,15 @@ xui.extend = xui.fn.extend;
     	 * 
     	 * This method is private, it takes a form element and returns a string
     	 * 
-    	 * @method
-    	 * @param {Element} 
-    	 * @return {String}
+    	 * @param {Element} form
+    	 * @return encoded querystring
     	 * 
     	 */
         _toQueryString: function(docForm) {   
            var submitString = formElement = lastElementName =  ''; 
     
-           for(i = 0 ; i < docForm.elements.length ; i++) { 
-             formElement = docForm.elements[i]; 
+           for(i = 0 ; i < docForm.length ; i++) { 
+             formElement = docForm[i]; 
              switch(formElement.type) { 
                 case 'text' : 
                 case 'select-one' : 
@@ -1209,10 +1222,9 @@ xui.extend = xui.fn.extend;
     	 * Another twist on remoting: lightweight and unobtrusive DOM databinding. Since we are often talking to a server with 
     	 * handy JSON objects we added the convienance the map property which allows you to map JSON nodes to DOM elements. 
     	 * 
-    	 * @method
-    	 * @param {String} The URL to request.
-    	 * @param {Object} The method options including a callback function to invoke when the request returns. 
-    	 * @return {Element Collection}
+    	 * @param {String} url The URL to request.
+    	 * @param {Object} options The method options including a callback function to invoke when the request returns. 
+    	 * @return self
     	 * @example
     	 * 
     	 * ### xhrjson 
@@ -1235,7 +1247,7 @@ xui.extend = xui.fn.extend;
             var callback = function() {
                 var o = eval('(' + this.responseText + ')');
                 for (var prop in o) {
-                    x$(options.map[prop]).html(cb(o[prop]));
+                    xui(options.map[prop]).html(cb(o[prop]));
                 }
             };
             options.callback = callback;
