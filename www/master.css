@@ -25,3 +25,34 @@ body, img {
 	display:block;
 	z-index:10;
 }
+#gauge {
+	width: 35px;
+	height: 385px;
+	position: absolute;
+	top: 55px;
+	right: 10px;
+	z-index: 5;
+	background-image: url('images/zoom_gauge.png');
+}
+#control {
+	position: absolute;
+	width: 40px;
+	height: 70px;
+	background-image: url('images/zoom_control.png');
+	left: -2px;
+	top: 155px;
+	z-index: 6px;
+}
+.zoom {
+	width: 35px;
+	height: 35px;
+	position: absolute;
+	text-decoration: none;
+}
+.beer {
+	z-index:2;
+	width: 40px;
+	height:45px;
+	background-image:url('images/marker.png');
+	position:relative;
+}

@@ -6,16 +6,17 @@
 		<title>Beer Me</title>
 		<link rel="stylesheet" href="master.css" type="text/css" media="screen" />
 		<script type="text/javascript" src="phonegap.js"></script>
+		<script type="text/javascript" src="adjust.js"></script>
 		<script type="text/javascript" src="yql_js_widget.js"></script>
 		<script type="text/javascript" src="xui-more-1.0.0.js"></script>
 		<script type="text/javascript" src="beerme.js"></script>
 		<script type="text/javascript">
-			var app = null;
+			var beer = null;
 			function init() {
 				x$(window).touchmove(function(e) { e.preventBehavior() });
 				var initBeer = function() {
-					app = new BeerMe();
-					app.init();
+					beer = new BeerMe();
+					beer.init();
 				};
 				// If it's not a BlackBerry, we can use events.
 				if (navigator.userAgent.indexOf('Browzr') > -1) {
@@ -27,8 +28,13 @@
 			x$(window).load(init);
 		</script>
 	</head>
-	<body>
+	<body id="body">
 		<img id="map" />
+		<div id="gauge">
+			<a id="plus" class="zoom" style="top:0px;" href="#"></a>
+			<a id="control" href="#"></a>
+			<a id="minus" class="zoom" style="bottom:0px;" href="#"></a>
+		</div>
 		<div id="resultsContainer"></div>
 		<div id="loadingScreen"><h1>LOADING</h1></div>
 	</body>

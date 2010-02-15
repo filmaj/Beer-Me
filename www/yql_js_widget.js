@@ -7,11 +7,11 @@
 * 
 * The copyrights embodied in the content of this file are licensed under the BSD (revised) open source license.
 *************************************************************************************************************/
- 
+
 //YUI includes for GET utility
 if (! window.YAHOO){
-    document.write('<script type="text/javascript" src="http://yui.yahooapis.com/2.7.0/build/yahoo/yahoo-min.js" ></script>' +
-		   '<script type="text/javascript" src="http://yui.yahooapis.com/2.7.0/build/get/get-min.js" ></script>');
+	document.write('<script type="text/javascript" src="http://yui.yahooapis.com/2.7.0/build/yahoo/yahoo-min.js" ></script>' +
+				   '<script type="text/javascript" src="http://yui.yahooapis.com/2.7.0/build/get/get-min.js" ></script>');
 }
    
 yqlWidget = function() {
@@ -20,7 +20,7 @@ yqlWidget = function() {
 	var widgetStack = [];
 	var currString, resultFormat, queryInsert, setupConfig = [];
 	var regex = /\{([\w\-\.\[\]]+)\}/gi;
- 
+	
 	/************************************************************
 	* Method: YUI GET Status Handlers 
 	* Description: YUI GET function status functions
@@ -35,23 +35,71 @@ yqlWidget = function() {
 	************************************************************/
 	var getYQLData = function(query){
 		//prepare the URL for YQL query:
-        	var sURL = yqlPublicQueryURL + "q=" + encodeURI(query) + "&format=json&callback=yqlWidget.getYQLDataCallback";
- 
+        var sURL = yqlPublicQueryURL + "q=" + encodeURI(query) + "&format=json&callback=yqlWidget.getYQLDataCallback";
+
 		//add any environment files specified in the config
 		if (setupConfig['env']) {
 			sURL += "&env=" + escape(setupConfig['env']);
 		}
- 
+		
+		//disable diagnostics if not set to true
+		if (setupConfig['diagnostics'] !== true){
+			sURL += "&diagnostics=false";
+		}
+		
 		//make GET request to YQL with provided query
-        	var transactionObj = YAHOO.util.Get.script(sURL, {
+        var transactionObj = YAHOO.util.Get.script(sURL, {
          	onSuccess : onYQLReqSuccess,
-		onFailure : onYQLReqFailure,
-            	scope     : this
-        	});
- 
+			onFailure : onYQLReqFailure,
+            scope     : this
+        });
+		
 		return transactionObj;
-    	}
- 
+    }
+	
+	/************************************************************
+	* Method: Parse YQL Results
+	* Description: Using the result set, parse the YQL results
+	*			   into display mode
+	************************************************************/
+	var parseYQLResults = function(results){
+		//get first JSON node - use loop due to first node being an unknown object
+		var firstChild;
+		for (var child in results){
+			if (results.hasOwnProperty(child)){
+				firstChild = results[child];
+				break;
+			}
+		}
+		var map = document.getElementById('body');
+		var drawBeer = function(node) {
+			//alert(node);
+			var img = document.createElement('img');
+			img.className = 'beer';
+			img.style.left = '75px';
+			img.style.top = '100px';
+			map.appendChild(img);
+		};
+		//return data instantiation
+		var html = "";
+		
+		//loop through all YQL return elements and result replace regex
+		if (firstChild.length !== undefined){
+			//multiple results - array
+			for(var i = 0; i < firstChild.length; i++){
+				html += parseFormat(firstChild[i]);
+				//drawBeer(firstChild[i]);
+			}
+		} else {
+			//single result - object
+			html += parseFormat(firstChild);
+			//drawBeer(firstChild);
+		}
+		
+		document.getElementById(queryInsert).innerHTML = html;
+		yqlWidget.render();
+	}
+	
 	/************************************************************
 	* Method: Parse Format
 	* Description: Loop through format array for provided
@@ -59,15 +107,17 @@ yqlWidget = function() {
 	************************************************************/
 	var parseFormat = function(node){
 		currString = node;
- 
+		
+		console.log(currString);
+		
 		//replace YQL result placeholders with return content
 		if (resultFormat){ currString = resultFormat.replace(regex, function(matchedSubstring, index, originalString){
 			return eval("currString." + index);
 		});}
- 
+		
 		return currString;
 	}
- 
+
 	/************************************************************
 	* Method: Public Function Return
 	* Functions: init - starts yql parsing functions
@@ -81,28 +131,29 @@ yqlWidget = function() {
 				if (setupConfig['debug'] && window.console){ console.log('Missing query, return format or insert element'); }
 				return null;
 			}
- 
+			
 			//push widget load on the stack
 			widgetStack.push(function(){ yqlWidget.init(query, config, format, insertEl); });
 		},
- 
+		
 		//pop widget off the load stack and execute
-		render: function(fn){ if (widgetStack.length > 0){ fn(widgetStack.pop()()); } },
- 
+		render: function(){ if (widgetStack.length > 0){ widgetStack.pop()(); } },
+	
 		//widget initialization
 		init: function(query, config, format, insertEl){ 
 			resultFormat = format; queryInsert = insertEl;
 			if (config){ setupConfig = config; }
 			return getYQLData(query);
 		}, 
- 
+		
 		//yql data caption success callback
 		getYQLDataCallback: function(o){
+			console.log(o.query);
 			if (! o.query){
 				if (setupConfig['debug'] && window.console){ console.log('YQL query returned no results'); }
 				return null;
 			}
-			return o.query.results.Result;
+			parseYQLResults(o.query.results);
 		}
 	}
 }();
