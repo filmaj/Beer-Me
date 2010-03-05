@@ -1,16 +1,30 @@
 function Zoom(app) {
-	this.beer = app;
-	this.level = 15;
+	this.beer = app; //reference to application
+	this.level = 15; //default zoom level for static map
+	this.min = 11; //minimum zoom level
+	this.max = 19; //maximum zoom level
+	this.controlStep = 30; //pixel step for moving the control around
+	this.controlPosition = 155; //default 'top' style property for the control
+	this.control = x$('#control');
+	this.control.setStyle('top',this.controlPosition.toString() + 'px');
 };
 Zoom.prototype.into = function() {
+	if (this.level == this.max) return false;
 	this.level++;
+	this.controlPosition -= this.controlStep;
+	this.control.setStyle('top',this.controlPosition.toString() + 'px');
 	this.beer.updateLocation();
 };
 Zoom.prototype.out = function() {
+	if (this.level == this.min) return false;
 	this.level--;
+	this.controlPosition += this.controlStep;
+	this.control.setStyle('top',this.controlPosition.toString() + 'px');
 	this.beer.updateLocation();
 };
-// Beer Me JS code.
+/**
+ * Contains most of the BeerMe application logic.
+ */
 function BeerMe() {
 	// Stores current user coordinates.
 	this.myCoords = {};
@@ -19,10 +33,10 @@ function BeerMe() {
 	// Controls zooming.
 	this.zoom = new Zoom(this);
 };
+
 /**
-	 * init: grabs GPS location using PhoneGap API and initializes data requests
-	 *   with our data sources.
-	 */
+ * Initializes controls (attaches events, positions DOM nodes) and then starts a location update.
+ */
 BeerMe.prototype.init = function() {
 	var dis = this;
 	x$('#plus').click(function(){
@@ -33,11 +47,18 @@ BeerMe.prototype.init = function() {
 	});
 	this.updateLocation();
 };
+/**
+ * Renders beer icons representing fountains of beer on the map, based on data pulled in from services.
+ * @param {Object} results An array of results containing place information.
+ */
 BeerMe.prototype.parseBeers = function(results) {
 	for (var i = 0; i < results.length; i++) {
 		var title = results[i].Title;
 	}
 };
+/**
+ * Uses PhoneGap geolocation call to retrieve GPS position, then makes a data request to BeerMapping & YQL for beereries (sweet new word I just made up).  
+ */
 BeerMe.prototype.updateLocation = function() {
 	var dis = this;
 	var win = function(position) {

@@ -40,7 +40,6 @@ body, img {
 	height: 70px;
 	background-image: url('images/zoom_control.png');
 	left: -2px;
-	top: 155px;
 	z-index: 6px;
 }
 .zoom {

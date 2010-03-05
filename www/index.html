@@ -8,21 +8,25 @@
 		<script type="text/javascript" src="scripts/phonegap.js"></script>
 		<script type="text/javascript" src="scripts/adjust.js"></script>
 		<script type="text/javascript" src="scripts/yql_js_widget.js"></script>
-		<script type="text/javascript" src="scripts/xui-more-1.0.0.min.js"></script>
+		<script type="text/javascript" src="scripts/xui-more-1.0.0.js"></script>
 		<script type="text/javascript" src="scripts/beerme.js"></script>
 		<script type="text/javascript">
 			var beer = null;
 			function init() {
-				x$(window).touchmove(function(e) { e.preventBehavior() });
 				var initBeer = function() {
 					beer = new BeerMe();
 					beer.init();
 				};
-				// If it's not a BlackBerry, we can use events.
-				if (navigator.userAgent.indexOf('Browzr') > -1) {
-					setTimeout(initBeer, 100)	
+				// Check that phonegap is loaded, look at readyState. If it is, initialize.
+				if (document.readyState == 'loaded' || document.readyState == 'complete') {
+					initBeer();
 				} else {
-					x$(document).on("deviceready", initBeer);					
+					// If it's not a BlackBerry, we can use events.
+					if (navigator.userAgent.indexOf('Browzr') > -1) {
+						setTimeout(initBeer, 100)	
+					} else {
+						x$(document).on("deviceready", initBeer);					
+					}
 				}
 			}
 			x$(window).load(init);
@@ -32,7 +36,7 @@
 		<img id="map" />
 		<div id="gauge">
 			<a id="plus" class="zoom" style="top:0px;" href="#"></a>
-			<a id="control" href="#"></a>
+			<div id="control"></div>
 			<a id="minus" class="zoom" style="bottom:0px;" href="#"></a>
 		</div>
 		<div id="resultsContainer"></div>
