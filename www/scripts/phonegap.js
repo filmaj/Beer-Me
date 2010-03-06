@@ -68,7 +68,7 @@ PhoneGap.addConstructor = function(func) {
 				}
             }
 			// all constructors run, now fire the deviceready event
-			var e = document.createEvent('Events'); 
+			var e = document.createEvent('Event'); 
 			e.initEvent('deviceready');
 			document.dispatchEvent(e);
 		}

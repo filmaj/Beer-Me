@@ -32,8 +32,18 @@ function BeerMe() {
 	this.beerMarkers = [];
 	// Controls zooming.
 	this.zoom = new Zoom(this);
+	this.detail = x$('#detailScreen');
 };
-
+/**
+ * Removes all current beer markers.
+ */
+BeerMe.prototype.clear = function() {
+	for (var i = 0; i < this.beerMarkers.length; i++) {
+		this.beerMarkers[i].node.remove();
+	}
+	this.beerMarkers = [];
+	this.detailScreen.setStyle('display','none');
+}
 /**
  * Initializes controls (attaches events, positions DOM nodes) and then starts a location update.
  */
@@ -60,6 +70,7 @@ BeerMe.prototype.parseBeers = function(results) {
  * Uses PhoneGap geolocation call to retrieve GPS position, then makes a data request to BeerMapping & YQL for beereries (sweet new word I just made up).  
  */
 BeerMe.prototype.updateLocation = function() {
+	this.clear(); // remove old markers
 	var dis = this;
 	var win = function(position) {
 		// Store coords.
@@ -76,15 +87,19 @@ BeerMe.prototype.updateLocation = function() {
 	};
 	navigator.geolocation.getCurrentPosition(win, fail);
 };
+/**
+ * Returns the radius of beer establishments that should be queried for based on current zoom level.
+ */
+BeerMe.prototype.getCurrentRadius = function() {
+	return (20 - this.zoom.level) * 2; // will return a value between 2 and 18 depending on how zoomed in you are.
+};
 BeerMe.prototype.getBeerFromBeerMapping = function(lat,lng) {
-	// TODO: implement variable radius specification based on user's current view setting.
-	var url = "http://beermapping.com/webservice/locgeo/33aac0960ce1fd70bd6e07191af96bd5/" + lat + "," + lng + ",50";
+	var url = "http://beermapping.com/webservice/locgeo/33aac0960ce1fd70bd6e07191af96bd5/" + lat + "," + lng + "," + this.getCurrentRadius();
 };
 BeerMe.prototype.getBeerFromYQL = function(lat,lng) {
-	// TODO: implement variable radius specification based on user's current view setting.
 	var config = {'debug' : true};
-	var format = '<div class="result">{Title}</div>';
-	var yqlQuery = "select * from local.search where radius=50 and latitude=" + lat + " and longitude=" + lng + " and query='beer'";
+	var format = '.';
+	var yqlQuery = "select * from local.search where radius=" + this.getCurrentRadius() + " and latitude=" + lat + " and longitude=" + lng + " and query='beer'";
 	var insertEl = 'resultsContainer';
 	yqlWidget.push(yqlQuery, config, format, insertEl);
 	yqlWidget.render();

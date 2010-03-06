@@ -72,12 +72,40 @@ yqlWidget = function() {
 			}
 		}
 		var map = document.getElementById('body');
+		/*
+		 * function LLToXY(X,Y,x,y,z){return Adjust(X,Y,x,y,z,1)}
+		
+		//	X = Longitude of marker center
+		//	Y = Latitude  of marker center
+		//	x = Longitude of map center
+		//	y = Latitude  of map center
+		//	z = Zoom level
+		
+		//	result.x = X pixel offset of marker center from map center
+		//	result.y = Y pixel offset of marker center from map center
+		 */
 		var drawBeer = function(node) {
-			//alert(node);
 			var img = document.createElement('img');
 			img.className = 'beer';
-			img.style.left = '75px';
-			img.style.top = '100px';
+			var rel = LLToXY(node.Longitude, node.Latitude, beer.myCoords.longitude, beer.myCoords.latitude, beer.zoom.level);
+			var objX = 160 + rel.x;
+			var objY = 240 + rel.y;
+			var info = {
+				'title':node.Title,
+				'address':node.Address + ', ' + node.City + ', ' + node.State,
+				'phone':node.Phone
+			};
+			img.style.left = objX.toString() + 'px';
+			img.style.top = objY.toString() + 'px';
+			var x = x$(img);
+			x.on('click',function() {
+				x$('#detailTitle').html(info.title);
+				x$('#detailScreen').setStyle('display','');
+			});
+			beer.beerMarkers.push({
+				'info': info,
+				'node': x
+			});
 			map.appendChild(img);
 		};
 		//return data instantiation
@@ -88,15 +116,15 @@ yqlWidget = function() {
 			//multiple results - array
 			for(var i = 0; i < firstChild.length; i++){
 				html += parseFormat(firstChild[i]);
-				//drawBeer(firstChild[i]);
+				drawBeer(firstChild[i]);
 			}
 		} else {
 			//single result - object
 			html += parseFormat(firstChild);
-			//drawBeer(firstChild);
+			drawBeer(firstChild);
 		}
 		
-		document.getElementById(queryInsert).innerHTML = html;
+		//document.getElementById(queryInsert).innerHTML = html;
 		yqlWidget.render();
 	}
 	

@@ -40,7 +40,7 @@ body, img {
 	height: 70px;
 	background-image: url('images/zoom_control.png');
 	left: -2px;
-	z-index: 6px;
+	z-index: 6;
 }
 .zoom {
 	width: 35px;
@@ -51,7 +51,16 @@ body, img {
 .beer {
 	z-index:2;
 	width: 40px;
-	height:45px;
+	height:60px;
 	background-image:url('images/marker.png');
-	position:relative;
+	position:absolute;
+}
+#detailScreen {
+	position:absolute;
+	z-index:10;
+	width:200px;
+	height:200px;
+	top:75px;
+	left:60px;
+	background-image:url('images/info_popup.png');
 }
