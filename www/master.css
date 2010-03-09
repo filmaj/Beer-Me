@@ -14,14 +14,13 @@ body, img {
 	overflow-y:scroll;
 }
 #loadingScreen {
-	width:	50%;
-	height:	50%;
+	width:	200px;
+	height:	200px;
 	position:absolute;
-	top:	25%;
-	left:	25%;
-	border:	1px solid black;
-	background-color:white;
+	top:	100px;
+	left:	60px;
 	color:	black;
+	background-image:url('images/info_popup.png');
 	display:block;
 	z-index:10;
 }
@@ -58,9 +57,27 @@ body, img {
 #detailScreen {
 	position:absolute;
 	z-index:10;
-	width:200px;
-	height:200px;
+	width:190px;
+	height:190px;
 	top:75px;
 	left:60px;
 	background-image:url('images/info_popup.png');
+	padding:5px;
+}
+#detailScreen h1 {
+	font-size:12px;
+	font-weight:bold;
+	text-align:center;
+}
+#detailScreen span {
+	display:block;
+	font-size:10px;
+}
+#closeBtn {
+	width:90px;
+	height:35px;
+	background-image:url('images/close_button.png');
+	position:absolute;
+	bottom:5px;
+	left:55px;
 }

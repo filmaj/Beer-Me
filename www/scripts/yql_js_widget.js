@@ -93,13 +93,23 @@ yqlWidget = function() {
 			var info = {
 				'title':node.Title,
 				'address':node.Address + ', ' + node.City + ', ' + node.State,
-				'phone':node.Phone
+				'phone':node.Phone,
+				'url':node.Url
 			};
 			img.style.left = objX.toString() + 'px';
 			img.style.top = objY.toString() + 'px';
 			var x = x$(img);
 			x.on('click',function() {
 				x$('#detailTitle').html(info.title);
+				x$('#detailAddress').html(info.address);
+				x$('#detailPhone').html('Tel.: <a href="tel:' + info.phone + '">' + info.phone + '</a>');
+				var urlNode = x$('#detailUrl');
+				if (info.url && info.url.length > 0) {
+					urlNode.html('<a href="' + info.url + '">Yahoo! Local Page</a>')
+					urlNode.setStyle('display','block');
+				} else {
+					urlNode.setStyle('display','none');
+				}
 				x$('#detailScreen').setStyle('display','');
 			});
 			beer.beerMarkers.push({

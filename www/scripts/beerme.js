@@ -1,3 +1,18 @@
+function makeOnClick(info) {
+	return function(){
+		x$('#detailTitle').html(info.title + "");
+	 	x$('#detailAddress').html(info.address);
+	 	x$('#detailPhone').html('Tel.: <a href="tel:' + info.phone + '">' + info.phone + '</a>');
+	 	var urlNode = x$('#detailUrl');
+	 	if (info.url && info.url.length > 0) {
+	 		urlNode.html('<a href="' + info.url + '">BeerMapping.com Reviews</a>')
+	 		urlNode.setStyle('display','block');
+	 	} else {
+	 		urlNode.setStyle('display','none');
+	 	}
+		x$('#detailScreen').setStyle('display', '');
+	};
+}
 function Zoom(app) {
 	this.beer = app; //reference to application
 	this.level = 15; //default zoom level for static map
@@ -33,6 +48,10 @@ function BeerMe() {
 	// Controls zooming.
 	this.zoom = new Zoom(this);
 	this.detail = x$('#detailScreen');
+	this.marker = {
+		width:45,
+		height:60
+	};
 };
 /**
  * Removes all current beer markers.
@@ -42,18 +61,22 @@ BeerMe.prototype.clear = function() {
 		this.beerMarkers[i].node.remove();
 	}
 	this.beerMarkers = [];
-	this.detailScreen.setStyle('display','none');
+	this.detail.setStyle('display','none');
 }
 /**
  * Initializes controls (attaches events, positions DOM nodes) and then starts a location update.
  */
 BeerMe.prototype.init = function() {
 	var dis = this;
+	// Zoom control zoom in/out events.
 	x$('#plus').click(function(){
 		dis.zoom.into()
 	});
 	x$('#minus').click(function(){
 		dis.zoom.out();
+	});
+	x$('#closeBtn').click(function() {
+		dis.detail.setStyle('display','none');
 	});
 	this.updateLocation();
 };
@@ -61,9 +84,51 @@ BeerMe.prototype.init = function() {
  * Renders beer icons representing fountains of beer on the map, based on data pulled in from services.
  * @param {Object} results An array of results containing place information.
  */
+// TODO: refactor this and the yql widget rendering into one function.
+// TODO: also brittle with respect to working on various resolutions. Made for 320x480 right now.
 BeerMe.prototype.parseBeers = function(results) {
-	for (var i = 0; i < results.length; i++) {
-		var title = results[i].Title;
+	// Extracts a value out of an XML document.
+	var extractValue = function(node, childName) {
+		try {
+			return node.getElementsByTagName(childName)[0].childNodes[0].nodeValue;
+		} catch(e) {
+			return '';
+		}
+	};
+	var map = document.getElementById('body');
+	var max = results.length;
+	for (var i = 0; i < max; i++) {
+		// First grab lat/lng and see whether the marker will display on screen. If not, skip it.
+		var lat = extractValue(results[i], 'lat');
+		var lng = extractValue(results[i], 'lng');
+		var rel = LLToXY(lng, lat, this.myCoords.longitude, this.myCoords.latitude, this.zoom.level);
+		var objX = 160 + rel.x;
+		var objY = 240 + rel.y;
+		if (objX < 1 || objX > 320-this.marker.width || objY < 1 || objY > 480-this.marker.height) continue;
+		// Extract data about the place from XML.
+		var link = extractValue(results[i], 'reviewlink');
+		var title = extractValue(results[i], 'name');
+		var address = extractValue(results[i], 'street') + ", " + extractValue(results[i], 'city') + ", " + extractValue(results[i], 'state') + ", " + extractValue(results[i], 'country');
+		var phone = extractValue(results[i], 'phone');
+		var rating = extractValue(results[i], 'overall');
+		// Create marker and inject into document.
+		var img = document.createElement('img');
+		img.className = 'beer';
+		var info ={
+			'title':title,
+			'address':address,
+			'phone':phone,
+			'url':link
+		}
+		img.style.left = objX.toString() + 'px';
+		img.style.top = objY.toString() + 'px';
+		var x = x$(img);
+		x.on('click', makeOnClick(info));
+		this.beerMarkers.push({
+			'info': info,
+			'node': x
+		});
+		map.appendChild(img);
 	}
 };
 /**
@@ -94,7 +159,19 @@ BeerMe.prototype.getCurrentRadius = function() {
 	return (20 - this.zoom.level) * 2; // will return a value between 2 and 18 depending on how zoomed in you are.
 };
 BeerMe.prototype.getBeerFromBeerMapping = function(lat,lng) {
+	var dis = this;
 	var url = "http://beermapping.com/webservice/locgeo/33aac0960ce1fd70bd6e07191af96bd5/" + lat + "," + lng + "," + this.getCurrentRadius();
+	x$('#results').xhr(url, {
+		async:true,
+		callback:function(incoming) {
+			if (incoming.responseXML) {
+				if (incoming.responseXML.childNodes[0]) {
+					var results =  incoming.responseXML.childNodes[0].childNodes;
+					dis.parseBeers(results);
+				}
+			}
+		}
+	});
 };
 BeerMe.prototype.getBeerFromYQL = function(lat,lng) {
 	var config = {'debug' : true};
