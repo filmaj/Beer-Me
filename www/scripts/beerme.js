@@ -114,7 +114,7 @@ BeerMe.prototype.parseBeers = function(results) {
 		var phone = extractValue(results[i], 'phone');
 		var rating = extractValue(results[i], 'overall');
 		// Create marker and inject into document.
-		var img = document.createElement('img'), img = x$(img);
+		var img = x$('<img/>');
 		img.addClass('beer');
 		var info ={
 			'title':title,
