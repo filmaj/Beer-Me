@@ -1,18 +1,3 @@
-function makeOnClick(info) {
-	return function(){
-		x$('#detailTitle').html(info.title + "");
-	 	x$('#detailAddress').html(info.address);
-	 	x$('#detailPhone').html('Tel.: <a href="tel:' + info.phone + '">' + info.phone + '</a>');
-	 	var urlNode = x$('#detailUrl');
-	 	if (info.url && info.url.length > 0) {
-	 		urlNode.html('<a href="' + info.url + '">BeerMapping.com Reviews</a>')
-	 		urlNode.setStyle('display','block');
-	 	} else {
-	 		urlNode.setStyle('display','none');
-	 	}
-		x$('#detailScreen').setStyle('display', '');
-	};
-}
 function Zoom(app) {
 	this.beer = app; //reference to application
 	this.level = 15; //default zoom level for static map
@@ -48,6 +33,7 @@ function BeerMe() {
 	// Controls zooming.
 	this.zoom = new Zoom(this);
 	this.detail = x$('#detailScreen');
+	this.map = x$('#body');
 	this.marker = {
 		width:45,
 		height:60
@@ -94,16 +80,32 @@ BeerMe.prototype.parseBeers = function(results) {
 		} catch(e) {
 			return '';
 		}
-	};
-	var map = document.getElementById('body');
-	var max = results.length;
-	for (var i = 0; i < max; i++) {
+	},
+	// Returns a beer click handler, given a bar info object. Used when we loop over bars.
+	makeOnClick = function(info) {
+		return function(){
+			x$('#detailTitle').html(info.title + "");
+			x$('#detailAddress').html(info.address);
+			x$('#detailPhone').html('Tel.: <a href="tel:' + info.phone + '">' + info.phone + '</a>');
+			var urlNode = x$('#detailUrl');
+			if (info.url && info.url.length > 0) {
+				urlNode.html('<a href="' + info.url + '">BeerMapping.com Reviews</a>')
+				urlNode.setStyle('display','block');
+			} else {
+				urlNode.setStyle('display','none');
+			}
+			x$('#detailScreen').setStyle('display', '');
+		};
+	},
+	total = results.length;
+	for (var i = 0; i < total; i++) {
 		// First grab lat/lng and see whether the marker will display on screen. If not, skip it.
 		var lat = extractValue(results[i], 'lat');
 		var lng = extractValue(results[i], 'lng');
 		var rel = LLToXY(lng, lat, this.myCoords.longitude, this.myCoords.latitude, this.zoom.level);
 		var objX = 160 + rel.x;
 		var objY = 240 + rel.y;
+		// This sucks cuz it won't work on different screens. help?
 		if (objX < 1 || objX > 320-this.marker.width || objY < 1 || objY > 480-this.marker.height) continue;
 		// Extract data about the place from XML.
 		var link = extractValue(results[i], 'reviewlink');
@@ -112,23 +114,22 @@ BeerMe.prototype.parseBeers = function(results) {
 		var phone = extractValue(results[i], 'phone');
 		var rating = extractValue(results[i], 'overall');
 		// Create marker and inject into document.
-		var img = document.createElement('img');
-		img.className = 'beer';
+		var img = document.createElement('img'), img = x$(img);
+		img.addClass('beer');
 		var info ={
 			'title':title,
 			'address':address,
 			'phone':phone,
 			'url':link
 		}
-		img.style.left = objX.toString() + 'px';
-		img.style.top = objY.toString() + 'px';
-		var x = x$(img);
-		x.on('click', makeOnClick(info));
+		img.setStyle('left', objX.toString() + 'px');
+		img.setStyle('top', objY.toString() + 'px');
+		img.on('click', makeOnClick(info));
 		this.beerMarkers.push({
 			'info': info,
-			'node': x
+			'node': img
 		});
-		map.appendChild(img);
+		this.map.bottom(img);
 	}
 };
 /**
@@ -187,11 +188,7 @@ BeerMe.prototype.beerUpdate = function(lat,lng) {
 	this.getBeerFromBeerMapping(lat,lng);
 };
 // Geolocation code shamelessly stolen from Movable Type scripts: http://www.movable-type.co.uk/scripts/latlong.html
-function LatLon(lat, lon) {
-	this.lat = lat;
-	this.lon = lon;
-}
-LatLon.distCosineLaw = function(lat1, lon1, lat2, lon2) {
+BeerMe.prototype.distCosineLaw = function(lat1, lon1, lat2, lon2) {
 	var R = 6371; // earth's mean radius in km
 	var d = Math.acos(Math.sin(lat1.toRad())*Math.sin(lat2.toRad()) +
 		Math.cos(lat1.toRad())*Math.cos(lat2.toRad())*Math.cos((lon2-lon1).toRad())) * R;
