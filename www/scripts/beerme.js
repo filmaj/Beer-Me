@@ -33,6 +33,7 @@ function BeerMe() {
 	// Controls zooming.
 	this.zoom = new Zoom(this);
 	this.detail = x$('#detailScreen');
+	this.loading = x$('#backdrop');
 	this.map = x$('#body');
 	this.marker = {
 		width:45,
@@ -140,6 +141,7 @@ BeerMe.prototype.parseBeers = function(results) {
  * Uses PhoneGap geolocation call to retrieve GPS position, then makes a data request to BeerMapping & YQL for beereries (sweet new word I just made up).  
  */
 BeerMe.prototype.updateLocation = function() {
+	this.showLoading();
 	this.clear(); // remove old markers
 	var dis = this;
 	var win = function(position) {
@@ -148,7 +150,6 @@ BeerMe.prototype.updateLocation = function() {
 		// Call for static google maps data.
 		var url = "http://maps.google.com/maps/api/staticmap?center=" + dis.myCoords.latitude + "," + dis.myCoords.longitude + "&zoom="+dis.zoom.level+"&size=320x480&maptype=roadmap&key=ABQIAAAASWkdhwcFZHCle_XL8gNI0hQQPTIxowtQGbc0PVHZZ3XLXr5GBhRKV3t_-63J9ZAJ2bYu3zsQdR9N-A&sensor=true"
 		x$('#map').attr('src',url);
-		x$('#loadingScreen').setStyle('display','none');
 		// Call for beer data.
 		dis.beerUpdate(dis.myCoords.latitude,dis.myCoords.longitude);
 	};
@@ -178,6 +179,7 @@ BeerMe.prototype.getBeerFromBeerMapping = function(lat,lng) {
 					dis.parseBeers(results);
 				}
 			}
+			dis.hideLoading();
 		}
 	});
 };
@@ -195,7 +197,21 @@ BeerMe.prototype.beerUpdate = function(lat,lng) {
 	this.getBeerFromBeerMapping(lat,lng);
 };
 BeerMe.prototype.showAbout = function() {
+	x$('#details').setStyle('display','none');
+	x$('#aboutText').setStyle('display','');
+	var hideAbout = function() {
+		x$('#details').setStyle('display','');
+		x$('#aboutText').setStyle('display','none');
+		document.getElementById('closeBtn').removeEventListener('click',hideAbout,false);
+	};
+	document.getElementById('closeBtn').addEventListener('click',hideAbout,false);
 	this.detail.setStyle('display','');
+};
+BeerMe.prototype.showLoading = function() {
+	this.loading.setStyle('display','');
+};
+BeerMe.prototype.hideLoading = function() {
+	this.loading.setStyle('display','none');
 };
 // Geolocation code shamelessly stolen from Movable Type scripts: http://www.movable-type.co.uk/scripts/latlong.html
 BeerMe.prototype.distCosineLaw = function(lat1, lon1, lat2, lon2) {

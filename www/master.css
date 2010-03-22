@@ -41,8 +41,8 @@ body, img {
 	overflow-y:scroll;
 }
 #loadingScreen {
-	width:	200px;
-	height:	200px;
+	width:	140px;
+	height:	140px;
 	position:absolute;
 	top:	100px;
 	left:	60px;
@@ -50,6 +50,17 @@ body, img {
 	background-image:url('images/info_popup.png');
 	display:block;
 	z-index:10;
+	padding:30px;
+}
+#backdrop {
+	width: 100%;
+	height:100%;
+	position:absolute;
+	background-color:#444444;
+	opacity: 0.5;
+	top:0px;
+	left:0px;
+	z-index:9;
 }
 #gauge {
 	width: 35px;
@@ -83,7 +94,7 @@ body, img {
 }
 #detailScreen {
 	position:absolute;
-	z-index:10;
+	z-index:8;
 	width:190px;
 	height:190px;
 	top:75px;
