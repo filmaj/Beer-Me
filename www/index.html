@@ -15,7 +15,6 @@
 			function init() {
 				var initBeer = function() {
 					beer = new BeerMe();
-					beer.init();
 				};
 				// Check that phonegap is loaded, look at readyState. If it is, initialize.
 				if (document.readyState == 'loaded' || document.readyState == 'complete') {
@@ -34,6 +33,9 @@
 	</head>
 	<body id="body">
 		<img id="map" />
+		<a id="refresh" href="#"></a>
+		<a id="about" href="#"></a>
+		<div id="me"></div>
 		<div id="gauge">
 			<a id="plus" class="zoom" style="top:0px;" href="#"></a>
 			<div id="control"></div>

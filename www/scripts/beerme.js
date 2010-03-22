@@ -38,21 +38,9 @@ function BeerMe() {
 		width:45,
 		height:60
 	};
-};
-/**
- * Removes all current beer markers.
- */
-BeerMe.prototype.clear = function() {
-	for (var i = 0; i < this.beerMarkers.length; i++) {
-		this.beerMarkers[i].node.remove();
-	}
-	this.beerMarkers = [];
-	this.detail.setStyle('display','none');
-}
-/**
- * Initializes controls (attaches events, positions DOM nodes) and then starts a location update.
- */
-BeerMe.prototype.init = function() {
+	/**
+	 * Initializes controls (attaches events, positions DOM nodes) and then starts a location update.
+	 */	
 	var dis = this;
 	// Zoom control zoom in/out events.
 	x$('#plus').click(function(){
@@ -64,8 +52,24 @@ BeerMe.prototype.init = function() {
 	x$('#closeBtn').click(function() {
 		dis.detail.setStyle('display','none');
 	});
+	x$('#refresh').click(function() {
+		dis.updateLocation();
+	});
+	x$('#about').click(function() {
+		dis.showAbout();
+	});
 	this.updateLocation();
 };
+/**
+ * Removes all current beer markers.
+ */
+BeerMe.prototype.clear = function() {
+	for (var i = 0; i < this.beerMarkers.length; i++) {
+		this.beerMarkers[i].node.remove();
+	}
+	this.beerMarkers = [];
+	this.detail.setStyle('display','none');
+}
 /**
  * Renders beer icons representing fountains of beer on the map, based on data pulled in from services.
  * @param {Object} results An array of results containing place information.
@@ -165,9 +169,12 @@ BeerMe.prototype.getBeerFromBeerMapping = function(lat,lng) {
 	x$('#results').xhr(url, {
 		async:true,
 		callback:function(incoming) {
-			if (incoming.responseXML) {
-				if (incoming.responseXML.childNodes[0]) {
-					var results =  incoming.responseXML.childNodes[0].childNodes;
+			//alert(incoming);
+			var xml = incoming.responseXML || this.responseXML;
+			if (xml) {
+				if (xml.childNodes[0]) {
+					var results =  xml.childNodes[0].childNodes;
+					//alert('beermapping results: ' + results.length);
 					dis.parseBeers(results);
 				}
 			}
@@ -186,6 +193,9 @@ BeerMe.prototype.beerUpdate = function(lat,lng) {
 	this.beerMarkers = [];
 	this.getBeerFromYQL(lat,lng);
 	this.getBeerFromBeerMapping(lat,lng);
+};
+BeerMe.prototype.showAbout = function() {
+	this.detail.setStyle('display','');
 };
 // Geolocation code shamelessly stolen from Movable Type scripts: http://www.movable-type.co.uk/scripts/latlong.html
 BeerMe.prototype.distCosineLaw = function(lat1, lon1, lat2, lon2) {
