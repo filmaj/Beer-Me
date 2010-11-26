@@ -2,7 +2,32 @@
 Number.prototype.toRad = function() {  // convert degrees to radians
 	return this * Math.PI / 180;
 };
-
+function Zoom(app) {
+     this.beer = app; //reference to application
+     this.level = 15; //default zoom level for static map
+     this.min = 11; //minimum zoom level
+     this.max = 19; //maximum zoom level
+     this.controlStep = 30; //pixel step for moving the control around
+     this.controlPosition = 155; //default 'top' style property for the control
+     this.control = x$('#control');
+     this.control.setStyle('top',this.controlPosition.toString() + 'px');
+};
+Zoom.prototype = {
+    into:function() {
+        if (this.level == this.max) return false;
+        this.level++;
+        this.controlPosition -= this.controlStep;
+        this.control.setStyle('top',this.controlPosition.toString() + 'px');
+        this.beer.updateLocation();
+    },
+    out:function() {
+        if (this.level == this.min) return false;
+        this.level--;
+        this.controlPosition += this.controlStep;
+        this.control.setStyle('top',this.controlPosition.toString() + 'px');
+        this.beer.updateLocation();
+    }
+}
 function BeerMe() {
 	this.myCoords = {};
 	this.beerMarkers = [];
@@ -18,8 +43,8 @@ function BeerMe() {
 	 */	
 	var self = this;
     // TODO: hook in zoom buttons.
-	//x$('#plus').click(this.zoom.into());
-	//x$('#minus').click(this.zoom.out());
+	x$('#plus').click(this.zoom.into);
+	x$('#minus').click(this.zoom.out);
 	x$('#closeBtn').click(function() {
 		self.detail.setStyle('display','none');
 	});
