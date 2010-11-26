@@ -38,6 +38,7 @@ function BeerMe() {
 		width:45,
 		height:60
 	};
+    this.zoom = new Zoom(this);
 	/**
 	 * Initializes controls (attaches events, positions DOM nodes) and then starts a location update.
 	 */	
