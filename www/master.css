@@ -3,7 +3,7 @@ body, img {
 	padding:0;
 	border:	0;
 }
-#map {
+.map {
 	width:	100%;
 	height:	100%;
 	z-index:1;

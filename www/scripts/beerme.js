@@ -139,6 +139,7 @@ BeerMe.prototype = {
         this.clear(); // remove old markers
         var dis = this;
         var win = function(position) {
+            console.log('Retrieved GPS coords.');
             // Store coords.
             dis.myCoords = position.coords;
             // Call for static google maps data.
