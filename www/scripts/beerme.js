@@ -17,8 +17,9 @@ function BeerMe() {
 	 * Initializes controls (attaches events, positions DOM nodes) and then starts a location update.
 	 */	
 	var self = this;
-	x$('#plus').click(self.zoom.into());
-	x$('#minus').click(self.zoom.out());
+    // TODO: hook in zoom buttons.
+	//x$('#plus').click(this.zoom.into());
+	//x$('#minus').click(this.zoom.out());
 	x$('#closeBtn').click(function() {
 		self.detail.setStyle('display','none');
 	});
@@ -128,7 +129,7 @@ BeerMe.prototype = {
     /**
      * Returns the radius of beer establishments that should be queried for based on current zoom level.
      */
-    getCurrentRadius;function() {
+    getCurrentRadius:function() {
         return (20 - this.zoom.level) * 2; // will return a value between 2 and 18 depending on how zoomed in you are.
     },
     getBeerFromBeerMapping:function(lat,lng) {
