@@ -166,7 +166,7 @@ BeerMe.prototype = {
             async:true,
             callback:function(incoming) {
                 //alert(incoming);
-                var xml = incoming.responseXML || this.responseXML;
+                var xml = incoming?incoming.responseXML:this.responseXML;
                 if (xml) {
                     if (xml.childNodes[0]) {
                         var results =  xml.childNodes[0].childNodes;
@@ -188,7 +188,7 @@ BeerMe.prototype = {
     },
     beerUpdate:function(lat,lng) {
         this.beerMarkers = [];
-        this.getBeerFromYQL(lat,lng);
+        //this.getBeerFromYQL(lat,lng);
         this.getBeerFromBeerMapping(lat,lng);
     },
     showAbout:function() {
