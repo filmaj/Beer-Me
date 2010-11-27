@@ -1,0 +1,121 @@
+body, img {
+	margin:	0;
+	padding:0;
+	border:	0;
+}
+.map {
+	width:	100%;
+	height:	100%;
+	z-index:1;
+}
+#refresh {
+	width:45px;
+	height:60px;
+	position:absolute;
+	right:0px;
+	top:0px;
+	z-index:6;
+	background-image:url('images/refresh.png');
+}
+#me {
+	z-index:2;
+	width:50px;
+	height:58px;
+	left:135px;
+	top:211px;
+	position:absolute;
+	background-image: url('images/androidmarker.png');
+}
+#about {
+	width:45px;
+	height:60px;
+	position:absolute;
+	left:0px;
+	top:0px;
+	z-index:6;
+	background-image:url('images/about.png');
+}
+#resultsContainer {
+	width:	100%;
+	height:	120px;
+	overflow-y:scroll;
+}
+#loadingScreen {
+	width:	140px;
+	height:	140px;
+	position:absolute;
+	top:	100px;
+	left:	60px;
+	color:	black;
+	background-image:url('images/info_popup.png');
+	display:block;
+	z-index:10;
+	padding:30px;
+}
+#backdrop {
+	width: 100%;
+	height:100%;
+	position:absolute;
+	background-color:#444444;
+	opacity: 0.5;
+	top:0px;
+	left:0px;
+	z-index:9;
+}
+#gauge {
+	width: 35px;
+	height: 385px;
+	position: absolute;
+	top: 75px;
+	right: 10px;
+	z-index: 5;
+	background-image: url('images/zoom_gauge.png');
+}
+#control {
+	position: absolute;
+	width: 40px;
+	height: 70px;
+	background-image: url('images/zoom_control.png');
+	left: -2px;
+	z-index: 6;
+}
+.zoom {
+	width: 35px;
+	height: 35px;
+	position: absolute;
+	text-decoration: none;
+}
+.beer {
+	z-index:3;
+	width: 40px;
+	height:60px;
+	background-image:url('images/marker.png');
+	position:absolute;
+}
+#detailScreen {
+	position:absolute;
+	z-index:8;
+	width:190px;
+	height:190px;
+	top:75px;
+	left:60px;
+	background-image:url('images/info_popup.png');
+	padding:5px;
+}
+#detailScreen h1 {
+	font-size:12px;
+	font-weight:bold;
+	text-align:center;
+}
+#detailScreen span {
+	display:block;
+	font-size:10px;
+}
+#closeBtn {
+	width:90px;
+	height:35px;
+	background-image:url('images/close_button.png');
+	position:absolute;
+	bottom:5px;
+	left:55px;
+}
