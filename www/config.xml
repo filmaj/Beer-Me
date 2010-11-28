@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns	= "http://www.w3.org/ns/widgets"
+	xmlns:gap	= "http://phonegap.com/ns/1.0"
+	id		    = "com.nitobi.beer"
+	version 	= "1.0">
+
+	<name>BeerMe</name>
+
+	<description>
+        Thirsty for a beer? BeerMe will find the closest one for you!
+	</description>
+
+	<author href="http://blogs.nitobi.com/fil"
+		email="filip.maj@nitobi.com">
+		Fil Maj
+	</author>
+
+	<gap:platforms>
+		<gap:platform name="android" minVersion="2.0" />
+		<gap:platform name="webos" />
+		<gap:platform name="symbian.wrt" />
+		<gap:platform name="blackberry" project="widgets"/>
+	</gap:platforms>
+
+	<icon src="images/marker.png" gap:role="default" />
+
+	<feature name="http://api.phonegap.com/1.0/geolocation"/>
+	<feature name="http://api.phonegap.com/1.0/network"/>
+</widget>
