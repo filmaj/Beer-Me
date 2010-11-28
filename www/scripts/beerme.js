@@ -39,8 +39,22 @@ Zoom.prototype = {
 function BeerMe() {
 	this.myCoords = {};
 	this.beerMarkers = [];
-	this.detail = x$('#detailScreen');
-	this.loading = x$('#backdrop');
+	this.detail = {
+	    container:x$('#detailScreen'),
+	    details:x$('#details'),
+	    about:x$('#aboutText'),
+	    title:x$('#detailTitle'),
+        address:x$('#detailAddress'),
+        phone:x$('#detailPhone'),
+        url:x$('#detailUrl'),
+        close:x$('#closeBtn')
+	};
+	this.loading = {
+	    backdrop:x$('#backdrop'),
+	    element:x$('#loadingScreen'),
+	    width:140,
+	    height:140
+	};
 	this.map = x$('#body');
 	this.me = {
 	    element:x$('#me'),
@@ -58,8 +72,8 @@ function BeerMe() {
 	var self = this;
 	x$('#plus').click(this.zoom.into());
 	x$('#minus').click(this.zoom.out());
-	x$('#closeBtn').click(function() {
-		self.detail.setStyle('display','none');
+	this.detail.close.click(function() {
+		self.detail.container.setStyle('display','none');
 	});
 	x$('#refresh').click(function() {
 		self.updateLocation();
@@ -84,7 +98,7 @@ BeerMe.prototype = {
             var beer = this.beerMarkers.pop().node[0];
             beer.parentNode.removeChild(beer);
         }
-        this.detail.setStyle('display','none');
+        this.detail.container.setStyle('display','none');
     },
     /**
      * Renders beer icons representing fountains of beer on the map, based on data pulled in from services.
@@ -93,7 +107,8 @@ BeerMe.prototype = {
     // TODO: refactor this and the yql widget rendering into one function.
     parseBeers:function(results) {
         // Extracts a value out of an XML document.
-        var extractValue = function(node, childName) {
+        var self = this,
+        extractValue = function(node, childName) {
             try {
                 return node.getElementsByTagName(childName)[0].childNodes[0].nodeValue;
             } catch(e) {
@@ -103,17 +118,17 @@ BeerMe.prototype = {
         // Returns a beer click handler, given a bar info object. Used when we loop over bars.
         makeOnClick = function(info) {
             return function(){
-                x$('#detailTitle').html(info.title + "");
-                x$('#detailAddress').html(info.address);
-                x$('#detailPhone').html('Tel.: <a href="tel:' + info.phone + '">' + info.phone + '</a>');
-                var urlNode = x$('#detailUrl');
+                self.detail.title.html(info.title + "");
+                self.detail.address.html(info.address);
+                self.detail.phone.html('Tel.: <a href="tel:' + info.phone + '">' + info.phone + '</a>');
+                var urlNode = self.detail.url;
                 if (info.url && info.url.length > 0) {
                     urlNode.html('<a href="' + info.url + '">BeerMapping.com Reviews</a>')
                     urlNode.setStyle('display','block');
                 } else {
                     urlNode.setStyle('display','none');
                 }
-                x$('#detailScreen').setStyle('display', '');
+                self.detail.container.setStyle('display', 'block');
             };
         },
         total = results.length;
@@ -229,27 +244,21 @@ BeerMe.prototype = {
         this.getBeerFromBeerMapping(lat,lng);
     },
     showAbout:function() {
-        x$('#details').setStyle('display','none');
-        x$('#aboutText').setStyle('display','');
+        this.detail.details.setStyle('display','none');
+        this.detail.about.setStyle('display','block');
+        var self = this;
         var hideAbout = function() {
-            x$('#details').setStyle('display','');
-            x$('#aboutText').setStyle('display','none');
-            document.getElementById('closeBtn').removeEventListener('click',hideAbout,false);
+            self.detail.details.setStyle('display','block');
+            self.detail.about.setStyle('display','none');
+            self.detail.close.un('click',hideAbout);
         };
-        document.getElementById('closeBtn').addEventListener('click',hideAbout,false);
-        this.detail.setStyle('display','');
+        this.detail.close.on('click',hideAbout);
+        this.detail.container.setStyle('display','block');
     },
     showLoading:function() {
-        this.loading.setStyle('display','');
+        this.loading.backdrop.setStyle('display','');
     },
     hideLoading:function() {
-        this.loading.setStyle('display','none');
-    },
-    // Geolocation code shamelessly stolen from Movable Type scripts: http://www.movable-type.co.uk/scripts/latlong.html
-    distCosineLaw:function(lat1, lon1, lat2, lon2) {
-        var R = 6371; // earth's mean radius in km
-        var d = Math.acos(Math.sin(lat1.toRad())*Math.sin(lat2.toRad()) +
-            Math.cos(lat1.toRad())*Math.cos(lat2.toRad())*Math.cos((lon2-lon1).toRad())) * R;
-        return d;
+        this.loading.backdrop.setStyle('display','none');
     }
 };

@@ -47,6 +47,7 @@ body, img {
 	top:	25%;
 	left:	35%;
 	color:	black;
+	opacity: 1;
 	background-image:url('images/info_popup.png');
 	display:block;
 	z-index:10;
