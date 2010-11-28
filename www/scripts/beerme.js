@@ -29,7 +29,6 @@ Zoom.prototype = {
     }
 }
 function BeerMe() {
-	console.log('test');
 	this.myCoords = {};
 	this.beerMarkers = [];
 	this.detail = x$('#detailScreen');
@@ -57,6 +56,7 @@ function BeerMe() {
 		self.showAbout();
 	});
 	this.updateLocation();
+	
 };
 BeerMe.prototype = {
     clear:function() {
@@ -102,10 +102,7 @@ BeerMe.prototype = {
             // First grab lat/lng and see whether the marker will display on screen. If not, skip it.
             var lat = extractValue(results[i], 'lat');
             var lng = extractValue(results[i], 'lng');
-			alert('before');
             var rel = LLToXY(lng, lat, this.myCoords.longitude, this.myCoords.latitude, this.zoom.level);
-			alert('after');
-			console.log('test');
             var objX = 160 + rel.x;
             var objY = 240 + rel.y;
             // This sucks cuz it won't work on different screens. help?
