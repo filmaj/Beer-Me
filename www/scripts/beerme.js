@@ -1,3 +1,5 @@
+if (typeof console == 'undefined') console = {};
+if (typeof console.log == 'undefined') console.log = function(s) {};
 /* Utility functions, prototype extensions (yeah I extend native prototypes. deal with it) */
 Number.prototype.toRad = function() {  // convert degrees to radians
 	return this * Math.PI / 180;
@@ -37,61 +39,57 @@ Zoom.prototype = {
     }
 }
 function BeerMe() {
-	this.myCoords = {};
-	this.beerMarkers = [];
-	this.detail = {
-	    container:x$('#detailScreen'),
-	    details:x$('#details'),
-	    about:x$('#aboutText'),
-	    title:x$('#detailTitle'),
-        address:x$('#detailAddress'),
-        phone:x$('#detailPhone'),
-        url:x$('#detailUrl'),
-        close:x$('#closeBtn')
-	};
-	this.loading = {
-	    backdrop:x$('#backdrop'),
-	    element:x$('#loadingScreen'),
-	    width:140,
-	    height:140
-	};
-	this.map = x$('#body');
-	this.me = {
-	    element:x$('#me'),
-	    width:58,
-	    height:50
-	};
-	this.marker = {
-		width:45,
-		height:60
-	};
-    this.zoom = new Zoom(this);
-	/**
-	 * Initializes controls (attaches events, positions DOM nodes) and then starts a location update.
-	 */	
-	var self = this;
-	x$('#plus').click(this.zoom.into());
-	x$('#minus').click(this.zoom.out());
-	this.detail.close.click(function() {
-		self.detail.container.setStyle('display','none');
-	});
-	x$('#refresh').click(function() {
-		self.updateLocation();
-	});
-	x$('#about').click(function() {
-		self.showAbout();
-	});
-	// Orientation event detection and attaching for updating location and getting fresh map.
-	// Thank you StackOverflow: http://stackoverflow.com/questions/1649086/detect-rotation-of-android-phone-in-the-browser-with-javascript
-	var supportsOrientationChange = "onorientationchange" in window,
-        orientationEvent = supportsOrientationChange ? "orientationchange" : "resize";
-    x$(window).on(orientationEvent, function() {
-        self.updateLocation();
+    this.checkNetwork(this.init, function() {
+        navigator.notification.alert(
+            'You have no data connectivity, this is required.',  // message
+            function(){},      // callback
+            'No connectivity'        // title
+            'OK'                  // buttonName
+        );
     });
-	this.updateLocation();
-	
 };
 BeerMe.prototype = {
+    init:function() {
+        this.myCoords = {};
+    	this.beerMarkers = [];
+    	this.detail = {
+    	    container:x$('#detailScreen'),
+    	    details:x$('#details'),
+    	    about:x$('#aboutText'),
+    	    title:x$('#detailTitle'),
+            address:x$('#detailAddress'),
+            phone:x$('#detailPhone'),
+            url:x$('#detailUrl'),
+            close:x$('#closeBtn')
+    	};
+    	this.loading = {
+    	    backdrop:x$('#backdrop'),
+    	    element:x$('#loadingScreen'),
+    	    width:140,
+    	    height:140
+    	};
+    	this.map = x$('#body');
+    	this.me = {
+    	    element:x$('#me'),
+    	    width:58,
+    	    height:50
+    	};
+    	this.marker = {
+    		width:45,
+    		height:60
+    	};
+    	if (device.platform.indexOf('BlackBerry') > -1) {
+            // Load static maps.
+            this.renderStatic();
+        } else {
+            // Load dynamic maps.
+            var script = document.createElement("script");
+            script.type = "text/javascript";
+            script.src = "http://maps.google.com/maps/api/js?sensor=false&callback=beer.renderDynamic";
+            document.body.appendChild(script);
+        }
+        
+    },
     // Cleanup function.
     clear:function() {
         while (this.beerMarkers.length) {
@@ -260,5 +258,58 @@ BeerMe.prototype = {
     },
     hideLoading:function() {
         this.loading.backdrop.setStyle('display','none');
+    },
+    checkNetwork:function(win, fail) {
+        navigator.network.isReachable('phonegap.com', function(reachability) {
+            var networkState = reachability.code || reachability;
+            switch (networkState) {
+                case NetworkStatus.NOT_REACHABLE:
+                    fail(networkState);
+                    break;
+                case NetworkStatus.REACHABLE_VIA_CARRIER_DATA_NETWORK:
+                case NetworkStatus.REACHABLE_VIA_WIFI_NETWORK:
+                    win(networkState);
+                    break;
+            }
+        });
+    },
+    renderStatic:function() {
+        this.zoom = new Zoom(this);
+    	/**
+    	 * Initializes controls (attaches events, positions DOM nodes) and then starts a location update.
+    	 */	
+    	var self = this;
+    	x$('#plus').click(this.zoom.into());
+    	x$('#minus').click(this.zoom.out());
+    	this.detail.close.click(function() {
+    		self.detail.container.setStyle('display','none');
+    	});
+    	x$('#refresh').click(function() {
+    		self.updateLocation();
+    	});
+    	x$('#about').click(function() {
+    		self.showAbout();
+    	});
+    	// TODO: this apparently deosnt work well on iphone?
+    	// Orientation event detection and attaching for updating location and getting fresh map.
+    	// Thank you StackOverflow: http://stackoverflow.com/questions/1649086/detect-rotation-of-android-phone-in-the-browser-with-javascript
+    	var supportsOrientationChange = "onorientationchange" in window,
+            orientationEvent = supportsOrientationChange ? "orientationchange" : "resize";
+        x$(window).on(orientationEvent, function() {
+            self.updateLocation();
+        });
+    	this.updateLocation();
+    },
+    renderDynamic:function() {
+        this.map = x$('.map');
+        this.map.html('');
+        x$('#gauge').setStyle('display', 'none');
+        var myLatlng = new google.maps.LatLng(parseFloat(this.myCoords.latitude), parseFloat(this.myCoords.longitude));
+        var myOptions = {
+            zoom: 8,
+            center: myLatlng,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+        this.gmap = new google.maps.Map(this.map[0], myOptions);
     }
 };
