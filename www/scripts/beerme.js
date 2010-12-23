@@ -1,9 +1,4 @@
-if (typeof console == 'undefined') console = {};
-if (typeof console.log == 'undefined') console.log = function(s) {};
-/* Utility functions, prototype extensions (yeah I extend native prototypes. deal with it) */
-Number.prototype.toRad = function() {  // convert degrees to radians
-	return this * Math.PI / 180;
-};
+// Zoom control.
 function Zoom(app) {
      this.beer = app; //reference to application
      this.level = 15; //default zoom level for static map
@@ -40,11 +35,12 @@ Zoom.prototype = {
 }
 function BeerMe() {
     this.checkNetwork(this.init, function() {
+        x$(document.body).html('Please try again when you have an internet connection.');
         navigator.notification.alert(
-            'You have no data connectivity, this is required.',  // message
-            function(){},      // callback
-            'No connectivity'        // title
-            'OK'                  // buttonName
+            'You have no data connectivity, this is required.',
+            function(){},
+            'No connectivity',
+            'OK'
         );
     });
 };
@@ -85,13 +81,14 @@ BeerMe.prototype = {
             // Load dynamic maps.
             var script = document.createElement("script");
             script.type = "text/javascript";
-            script.src = "http://maps.google.com/maps/api/js?sensor=false&callback=beer.renderDynamic";
+            script.src = "http://maps.google.com/maps/api/js?sensor=false&callback=renderDynamic";
             document.body.appendChild(script);
         }
         
     },
     // Cleanup function.
     clear:function() {
+        // TODO: handle both static and dynamic map markers.
         while (this.beerMarkers.length) {
             var beer = this.beerMarkers.pop().node[0];
             beer.parentNode.removeChild(beer);
@@ -188,11 +185,11 @@ BeerMe.prototype = {
             // Store coords.
             dis.myCoords = position.coords;
             
-            // Call for static google maps data.
+            // Call for static google maps data. TODO: what about dynamic maps?
             var url = "http://maps.google.com/maps/api/staticmap?center=" + dis.myCoords.latitude + "," + dis.myCoords.longitude + "&zoom="+dis.zoom.level+"&size="+screen.width+"x"+screen.height+"&maptype=roadmap&key=ABQIAAAASWkdhwcFZHCle_XL8gNI0hQQPTIxowtQGbc0PVHZZ3XLXr5GBhRKV3t_-63J9ZAJ2bYu3zsQdR9N-A&sensor=true"
             x$('#map').attr('src',url);
             
-            // If orientation is landscape, hide the zoom bar.
+            // If orientation is landscape, hide the zoom bar. TODO: what about dynamic maps?
             if (screen.width > screen.height) dis.zoom.gauge.setStyle('display','none');
             else dis.zoom.gauge.setStyle('display','block');
             
@@ -203,12 +200,6 @@ BeerMe.prototype = {
             alert('Can\'t retrieve position.\nError: ' + e);
         };
         navigator.geolocation.getCurrentPosition(win, fail);
-    },
-    /**
-     * Returns the radius of beer establishments that should be queried for based on current zoom level.
-     */
-    getCurrentRadius:function() {
-        return (20 - this.zoom.level) * 2; // will return a value between 2 and 18 depending on how zoomed in you are.
     },
     getBeerFromBeerMapping:function(lat,lng) {
         var dis = this;
@@ -237,7 +228,7 @@ BeerMe.prototype = {
     },
     beerUpdate:function(lat,lng) {
         this.beerMarkers = [];
-        // TODO: enable YQL parsing.
+        // TODO: enable YQL data, brewerydb data.
         //this.getBeerFromYQL(lat,lng);
         this.getBeerFromBeerMapping(lat,lng);
     },
@@ -275,6 +266,9 @@ BeerMe.prototype = {
     },
     renderStatic:function() {
         this.zoom = new Zoom(this);
+        this.getCurrentRadius = function() {
+            return (20 - this.zoom.level) * 2; // will return a value between 2 and 18 depending on how zoomed in you are.
+        };
     	/**
     	 * Initializes controls (attaches events, positions DOM nodes) and then starts a location update.
     	 */	

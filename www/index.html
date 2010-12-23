@@ -11,18 +11,16 @@
 		<script type="text/javascript" src="scripts/xui/xui.min.js"></script>
 		<script type="text/javascript" src="scripts/beerme.js"></script>
 		<script type="text/javascript">
-			function init() {
-				var initBeer = function() {
-					beer = new BeerMe();
-				};
-				// Check that phonegap is loaded, look at readyState. If it is, initialize.
-				if (document.readyState == 'loaded' || document.readyState == 'complete') {
-					initBeer();
-				} else {
-                    x$(document).on("deviceready", initBeer);					
-				}
-			}
-			x$(window).load(init);
+    		if (typeof console == 'undefined') console = {};
+            if (typeof console.log == 'undefined') console.log = function(s) {};
+            Number.prototype.toRad = function() {  // convert degrees to radians
+            	return this * Math.PI / 180;
+            };
+            
+            x$(document).on("deviceready", function() {
+                beer = new BeerMe();
+    		    renderDynamic = beer.renderDynamic; // dynamic gmaps load callback
+            });
 		</script>
 	</head>
 	<body id="body">
