@@ -1,6 +1,1 @@
-[submodule "phonegap/phonegap-iphone"]
-	path = phonegap/phonegap-iphone
-	url = git://github.com/phonegap/phonegap-iphone.git
-[submodule "phonegap/phonegap-android"]
-	path = phonegap/phonegap-android
-	url = git://github.com/phonegap/phonegap-android.git
+
