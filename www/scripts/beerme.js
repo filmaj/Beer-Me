@@ -46,6 +46,7 @@ function BeerMe() {
 };
 BeerMe.prototype = {
     init:function() {
+        this.usesStaticMaps = true;
         this.myCoords = {};
     	this.beerMarkers = [];
     	this.detail = {
@@ -265,6 +266,7 @@ BeerMe.prototype = {
         });
     },
     renderStatic:function() {
+        this.usesStaticMaps = true;
         this.zoom = new Zoom(this);
         this.getCurrentRadius = function() {
             return (20 - this.zoom.level) * 2; // will return a value between 2 and 18 depending on how zoomed in you are.
@@ -295,6 +297,7 @@ BeerMe.prototype = {
     	this.updateLocation();
     },
     renderDynamic:function() {
+        this.usesStaticMaps = false;
         this.map = x$('.map');
         this.map.html('');
         x$('#gauge').setStyle('display', 'none');
