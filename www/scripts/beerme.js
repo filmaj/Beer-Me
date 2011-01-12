@@ -3,8 +3,21 @@ function BeerMe(g) {
     
     // members
     this.position = {};
+    this.radius = 20;
     this.map = null;
-    this.data = {
+    
+    /* data adapters.
+    *  each object in the data array must have a `get` function that will parse a data source
+    *  and call `self.addMarker(obj)` to add markers for beer. marker template:
+        {
+            name:'',
+            lat:0,
+            lng:0,
+            address:'',
+            phone:''
+        }
+    */
+    this.data = [
         'beermapping':{
             get:function(lat, lng, radius) {
                 var url = "http://localhost:8088/webservice/locgeo/33aac0960ce1fd70bd6e07191af96bd5/" + lat + "," + lng + "," + radius;
@@ -34,7 +47,7 @@ function BeerMe(g) {
                 });
             }
         }
-    };
+    ];
     
     // refresh location and render map.
     this.refresh(function() {
@@ -55,7 +68,8 @@ function BeerMe(g) {
         };
         this.map = new g.maps.Map(x$('#map')[0], myOptions);
         for (var d in this.data) {
-            this.data[d].get(this.position.coords.latitude, this.position.coords.longitude, 20)
+
+            this.data[d].get(this.position.coords.latitude, this.position.coords.longitude, this.radius)
         }
     });
 }
