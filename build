@@ -1,2 +1,22 @@
 #!/bin/bash
+git submodule init
+git submodule update
+
+# clean
+rm -rf www_android
+
+# lawnchair build first.
+cd libs/lawnchair
+./build dom
+mv lc_prod.js ../../www/scripts/lawnchair.js
+
+# xui build next.
+cd ../xui
+git submodule init
+git submodule update
+./build --minify
+mv lib/xui-2.0.0.min.js ../../www/scripts/xui.js
+
+# generate phonegap-android project
+cd ../..
 droidgap gen www

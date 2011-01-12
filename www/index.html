@@ -5,12 +5,14 @@
 		<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 		<title>Beer Me</title>
 		<link rel="stylesheet" href="master.css" type="text/css" media="screen" />
-		<script type="text/javascript" src="scripts/beerme.js"></script>
+		<script type="text/javascript" src="scripts/xui.js"></script>
+		<script type="text/javascript" src="scripts/lawnchair.js"></script>
+    	<script type="text/javascript" src="scripts/beerme.js"></script>
 		<script type="text/javascript">
 		    function load() {
 		        var s = document.createElement('script');
 		        s.src = "http://maps.google.com/maps/api/js?sensor=true&callback=initialize";
-		        document.body.appendChild(s);
+		        x$(document.body).bottom(s);
 		    }
 		    function initialize() {
                 beerme = new BeerMe(google);
@@ -19,5 +21,6 @@
 		<!--<script type="text/javascript" src="phonegap.js"></script>-->
 	</head>
 	<body onload="load();">
+	    <div id="map"></div>
 	</body>
 </html>
