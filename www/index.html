@@ -5,6 +5,7 @@
 		<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 		<title>Beer Me</title>
 		<link rel="stylesheet" href="master.css" type="text/css" media="screen" />
+		<script type="text/javascript" src="http://maps.google.com/maps/api/js?libraries=geometry&sensor=true"></script>
 		<script type="text/javascript" src="scripts/xui.js"></script>
 		<script type="text/javascript" src="scripts/lawnchair.js"></script>
     	<script type="text/javascript" src="scripts/beerme.js"></script>
@@ -21,6 +22,11 @@
 		<!--<script type="text/javascript" src="phonegap.js"></script>-->
 	</head>
 	<body onload="load();">
+	    <div id="blackout"></div>
 	    <div id="map"></div>
+	    <div id="loading">
+	        <h1>Loading...</h1>
+	        <p>Loading map...</p>
+        </div>
 	</body>
 </html>
