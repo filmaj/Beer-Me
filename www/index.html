@@ -1,57 +1,23 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE HTML>
 <html>
 	<head>
-		<meta name="viewport" content="width=device-width; height=device-height; user-scalable=no" />
-		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+		<meta name="viewport" content="width=device-width; height=device-height; user-scalable=yes" />
+		<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 		<title>Beer Me</title>
 		<link rel="stylesheet" href="master.css" type="text/css" media="screen" />
-		<script type="text/javascript" src="phonegap.js"></script>
-		<script type="text/javascript" src="scripts/adjust.js"></script>
-		<script type="text/javascript" src="scripts/yql_js_widget.js"></script>
-		<script type="text/javascript" src="scripts/xui/xui.min.js"></script>
-		<script type="text/javascript" src="scripts/zoom.js"></script>
 		<script type="text/javascript" src="scripts/beerme.js"></script>
 		<script type="text/javascript">
-    		if (typeof console == 'undefined') console = {};
-            if (typeof console.log == 'undefined') console.log = function(s) {};
-            Number.prototype.toRad = function() {  // convert degrees to radians
-            	return this * Math.PI / 180;
-            };
-            x$(document).on("deviceready", function() {
-                beer = new BeerMe();
-    		    renderDynamic = beer.renderDynamic; // dynamic gmaps load callback
-            });
+		    function load() {
+		        var s = document.createElement('script');
+		        s.src = "http://maps.google.com/maps/api/js?sensor=true&callback=initialize";
+		        document.body.appendChild(s);
+		    }
+		    function initialize() {
+                beerme = new BeerMe(google);
+		    }
 		</script>
+		<!--<script type="text/javascript" src="phonegap.js"></script>-->
 	</head>
-	<body id="body">
-		<div class="map"><img id="map" class="map" /></div>
-		<a id="refresh" href="#"></a>
-		<a id="about" href="#"></a>
-		<div id="me"></div>
-		<div id="gauge">
-			<a id="plus" class="zoom" style="top:0px;" href="#"></a>
-			<div id="control"></div>
-			<a id="minus" class="zoom" style="bottom:0px;" href="#"></a>
-		</div>
-		<div id="detailScreen" style="display:none;">
-			<div id="details">
-				<h1 id="detailTitle"></h1>
-				<span id="detailAddress"></span>
-				<span id="detailPhone"></span>
-				<span id="detailUrl"></span>
-			</div>
-			<div id="aboutText" style="display:none;">
-				<p>Made by Fil Maj of Nitobi Software.</p>
-				<p><a href="http://www.nitobi.com">Nitobi.com</a></p>
-                <p><a href="mailto:filip.maj@nitobi.com">E-mail me</a></p>
-			</div>
-			<div id="closeBtn"></div>
-		</div>
-		<div id="backdrop">
-			<div id="loadingScreen">
-				<h2>Loading...</h2>
-				<p>Sniffing for beer...</p>
-			</div>
-		</div>
+	<body onload="load();">
 	</body>
 </html>
