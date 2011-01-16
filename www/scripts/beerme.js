@@ -120,10 +120,16 @@ BeerMe.prototype = {
             this.markers.push(marker);
         }
     },
-    showLoading:function() {
-        
+    showLoading:function(msg, p) {
+        var self = this;
+        if (msg) this.loading.msg.inner(msg);
+        if (p) this.loading.p.inner(p);
+        this.blackout.fade('in', function() {
+            self.loading.el.fade('in');
+        });
     },
     hideLoading:function() {
-
+        this.loading.el.fade('out');
+        this.blackout.fade('out');
     }
 }

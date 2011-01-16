@@ -14,9 +14,12 @@ mv lc_prod.js ../../www/scripts/lawnchair.js
 cd ../xui
 git submodule init
 git submodule update
-./build --cat=../xui-plugins/fx-helpers/fx-helpers.js --minify
+./build --minify
 mv lib/xui-2.0.0.min.js ../../www/scripts/xui.js
 
-# generate phonegap-android project
+# move xui plugin into www
 cd ../..
+cp libs/xui-plugins/fx-helpers/fx-helpers.js www/scripts/fx-helpers.js
+
+# generate phonegap-android project
 droidgap create /Users/filmaj/src/BeerMe/www
