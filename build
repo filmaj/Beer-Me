@@ -19,4 +19,4 @@ mv lib/xui-2.0.0.min.js ../../www/scripts/xui.js
 
 # generate phonegap-android project
 cd ../..
-droidgap gen www
+droidgap create www
