@@ -5,6 +5,3 @@
 [submodule "libs/lawnchair"]
 	path = libs/lawnchair
 	url = git://github.com/xui/lawnchair.git
-[submodule "lib/xui-plugins"]
-	path = lib/xui-plugins
-	url = git://github.com/xui/xui-plugins
