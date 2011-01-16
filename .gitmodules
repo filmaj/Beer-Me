@@ -1,7 +1,7 @@
 
 [submodule "libs/xui"]
 	path = libs/xui
-	url = git://github.com/xui/xui.git
+	url = git://github.com/filmaj/xui.git
 [submodule "libs/lawnchair"]
 	path = libs/lawnchair
 	url = git://github.com/xui/lawnchair.git
