@@ -35,4 +35,5 @@ Graphic assets employed were designed by either [Yohei S.](http://www.twitter.co
 
 To-dos
 ----
+- Cache - lawnchair
 - It would be cool to add more (PhoneGap) platform support in the build script.

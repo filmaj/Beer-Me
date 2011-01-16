@@ -2,7 +2,7 @@ function BeerMe() {
     var self = this;
     
     // members
-    this.position = {};
+    this.position = {lat:null, lng:null};
     this.radius = 20;
     this.map = null;
     this.markers = [];
@@ -61,20 +61,23 @@ function BeerMe() {
     // events
     x$(window).on('orientationchange', this.draw);
     
-    // refresh location and render map.
+    // refresh and render on first time.
     this.refresh(this.draw);
 }
 BeerMe.prototype = {
-    draw:function() {
-        // size map 
+    draw:function(e) {
         var o = window.orientation;
+        console.log('Orientation is: ' + o + ', width: ' + screen.availWidth + ', height: ' + screen.availHeight);
+        console.log('lat ' + this.position.lat + ', lng: ' + this.position.lng);
+        
+        // size map 
         x$('#map').css({
-            height:(o?screen.availWidth:screen.availHeight) + 'px',
-            width:(o?screen.availHeight:screen.availWidth) + 'px'
+            height:((o == 90 || o == -90)?screen.availWidth:screen.availHeight) + 'px',
+            width: ((o == 90 || o == -90)?screen.availHeight:screen.availWidth) + 'px'
         });
         
         // draw map
-        this.LatLng = new google.maps.LatLng(this.position.coords.latitude, this.position.coords.longitude);
+        this.LatLng = new google.maps.LatLng(this.position.lat, this.position.lng);
         var myOptions = {
             zoom: 10,
             center: this.LatLng,
@@ -84,7 +87,7 @@ BeerMe.prototype = {
         };
         this.map = new google.maps.Map(x$('#map')[0], myOptions);
         for (var d in this.data) {
-            this.data[d].get(this.position.coords.latitude, this.position.coords.longitude, this.radius)
+            this.data[d].get(this.position.lat, this.position.lng, this.radius)
         }
         this.hideLoading();
     },
@@ -94,7 +97,8 @@ BeerMe.prototype = {
             enableHighAccuracy:true,
             maximumAge:0
         },  win = function(p) {
-            self.position = p;
+            self.position.lat = p.coords.latitude;
+            self.position.lng = p.coords.longitude;
             callback.call(self);
         },  fail = function() {
             navigator.notification.alert('Error','Cannot retrieve position');
@@ -120,7 +124,6 @@ BeerMe.prototype = {
         
     },
     hideLoading:function() {
-        this.blackout.setStyle('display','none');
-        this.loading.el.setStyle('display','none');
+
     }
 }
