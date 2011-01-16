@@ -1,4 +1,4 @@
-function BeerMe(g) {
+function BeerMe() {
     var self = this;
     
     // members
@@ -74,7 +74,7 @@ BeerMe.prototype = {
         });
         
         // draw map
-        this.LatLng = new g.maps.LatLng(this.position.coords.latitude, this.position.coords.longitude);
+        this.LatLng = new google.maps.LatLng(this.position.coords.latitude, this.position.coords.longitude);
         var myOptions = {
             zoom: 10,
             center: this.LatLng,
@@ -82,7 +82,7 @@ BeerMe.prototype = {
             mapTypeControl:false,
             streetViewControl:false
         };
-        this.map = new g.maps.Map(x$('#map')[0], myOptions);
+        this.map = new google.maps.Map(x$('#map')[0], myOptions);
         for (var d in this.data) {
             this.data[d].get(this.position.coords.latitude, this.position.coords.longitude, this.radius)
         }
