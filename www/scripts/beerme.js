@@ -29,7 +29,7 @@ function BeerMe(g) {
     this.data = {
         'beermapping':{
             get:function(lat, lng, radius) {
-                var url = "http://localhost:8088/webservice/locgeo/33aac0960ce1fd70bd6e07191af96bd5/" + lat + "," + lng + "," + radius;
+                var url = "http://www.beermapping.com/webservice/locgeo/33aac0960ce1fd70bd6e07191af96bd5/" + lat + "," + lng + "," + radius;
                 x$(window).xhr(url, {
                     async:true,
                     callback:function(incoming) {
@@ -58,12 +58,19 @@ function BeerMe(g) {
         }
     };
     
+    // events
+    x$(window).on('orientationchange', this.draw);
+    
     // refresh location and render map.
-    this.refresh(function() {
+    this.refresh(this.draw);
+}
+BeerMe.prototype = {
+    draw:function() {
         // size map 
+        var o = window.orientation;
         x$('#map').css({
-            height:screen.availHeight + 'px',
-            width:screen.availWidth + 'px'
+            height:(o?screen.availWidth:screen.availHeight) + 'px',
+            width:(o?screen.availHeight:screen.availWidth) + 'px'
         });
         
         // draw map
@@ -80,9 +87,7 @@ function BeerMe(g) {
             this.data[d].get(this.position.coords.latitude, this.position.coords.longitude, this.radius)
         }
         this.hideLoading();
-    });
-}
-BeerMe.prototype = {
+    },
     refresh:function(callback) {
         var self = this,
             options = {
