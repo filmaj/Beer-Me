@@ -50,7 +50,7 @@ function BeerMe(g) {
                                 });
                             })
                         } else {
-                            navigation.notification.alert('Error','Cannot retrieve data from beermapping.com.');
+                            navigator.notification.alert('Error','Cannot retrieve data from beermapping.com.');
                         }
                     }
                 });
