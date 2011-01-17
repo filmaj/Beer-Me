@@ -17,6 +17,15 @@ function BeerMe() {
     }
     this.showLoading();
     
+    // templates
+    this.templates = {
+        info:['<div class="info">',
+            '<h3>{name}</h3>',
+            '<p class="address">{address}</p>',
+            '<p class="phone">{phone}</p>',
+            '</div>'].join('')
+    };
+    
     /* data adapters.
     *  each member in the data object must have a `get` function that will parse a data source
     *  and call `self.addMarker(obj)` to add markers for beer. marker template:
@@ -113,8 +122,16 @@ BeerMe.prototype = {
         navigator.geolocation.getCurrentPosition(win, fail, options);
     },
     addMarker:function(item) {
-        var itemP = new google.maps.LatLng(item.lat, item.lng),
-            b = this.map.getBounds();
+        var self = this,
+            itemP = new google.maps.LatLng(item.lat, item.lng),
+            b = this.map.getBounds(),
+            format = function(str, obj) {
+                for (var i in obj) {
+                    var r = new RegExp('\{' + i + '\}','g')
+                    str = str.replace(r, obj[i]);
+                }
+                return str;
+            }
         
         // check if it is worth showing item in the current window.
         if (b.contains(itemP)) {
@@ -124,6 +141,16 @@ BeerMe.prototype = {
                 animation: google.maps.Animation.DROP,
                 position:itemP,
                 icon:'images/marker.png'
+            });
+            var info = new google.maps.InfoWindow({
+                content:this.templates.info.format({
+                    name:item.name,
+                    address:item.address,
+                    phone:'<a href="tel:' + item.phone + '">' + item.phone + '</a>'
+                })
+            });
+            google.maps.event.addListener(marker, 'click', function() {
+                info.open(self.map, marker);
             });
             this.markers.push(marker);
         }
