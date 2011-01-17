@@ -1,4 +1,5 @@
 function BeerMe() {
+    console.log('Constructing new beer me.');
     var self = this;
     
     // members
@@ -14,6 +15,7 @@ function BeerMe() {
         msg:x$('#loading h1'),
         p:x$('#loading p')
     }
+    this.showLoading();
     
     /* data adapters.
     *  each member in the data object must have a `get` function that will parse a data source
@@ -59,10 +61,16 @@ function BeerMe() {
     };
     
     // events
-    x$(window).on('orientationchange', this.draw);
+    x$(window).on('orientationchange', function() {
+        console.log('Orientation change draw');
+        self.draw();
+    });
     
     // refresh and render on first time.
-    this.refresh(this.draw);
+    this.refresh(function() {
+        console.log('First load refresh + draw');
+        self.draw();
+    });
 }
 BeerMe.prototype = {
     draw:function(e) {
@@ -90,6 +98,7 @@ BeerMe.prototype = {
             this.data[d].get(this.position.lat, this.position.lng, this.radius)
         }
         this.hideLoading();
+        console.log('End draw');
     },
     refresh:function(callback) {
         var self = this,
@@ -97,6 +106,7 @@ BeerMe.prototype = {
             enableHighAccuracy:true,
             maximumAge:0
         },  win = function(p) {
+            console.log('Geolocation win callback.');
             self.position.lat = p.coords.latitude;
             self.position.lng = p.coords.longitude;
             callback.call(self);
@@ -120,10 +130,10 @@ BeerMe.prototype = {
             this.markers.push(marker);
         }
     },
-    showLoading:function(msg, p) {
+    showLoading:function(title, msg) {
         var self = this;
-        if (msg) this.loading.msg.inner(msg);
-        if (p) this.loading.p.inner(p);
+        if (title) this.loading.msg.inner(title);
+        if (msg) this.loading.p.inner(msg);
         this.blackout.fade('in', function() {
             self.loading.el.fade('in');
         });

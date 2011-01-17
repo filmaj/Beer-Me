@@ -7,4 +7,4 @@
 	url = git://github.com/xui/lawnchair.git
 [submodule "libs/xui-plugins"]
 	path = libs/xui-plugins
-	url = git://github.com/xui/xui-plugins
+	url = git://github.com/filmaj/xui-plugins.git

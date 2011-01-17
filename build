@@ -23,3 +23,7 @@ cp libs/xui-plugins/fx-helpers/fx-helpers.js www/scripts/fx-helpers.js
 
 # generate phonegap-android project
 droidgap create /Users/filmaj/src/BeerMe/www
+
+# load onto phone
+cd www_android
+ant debug install
