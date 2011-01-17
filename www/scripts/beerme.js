@@ -122,7 +122,8 @@ BeerMe.prototype = {
                 map:this.map,
                 draggable:false,
                 animation: google.maps.Animation.DROP,
-                position:itemP
+                position:itemP,
+                icon:'images/marker.png'
             });
             this.markers.push(marker);
         }
