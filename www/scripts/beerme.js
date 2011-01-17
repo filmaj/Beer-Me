@@ -61,22 +61,19 @@ function BeerMe() {
     };
     
     // events
-    x$(window).on('orientationchange', function() {
-        console.log('Orientation change draw');
-        self.draw();
+    x$(window).on('orientationchange', function(e) {
+        
+        self.draw(e);
     });
     
     // refresh and render on first time.
     this.refresh(function() {
-        console.log('First load refresh + draw');
         self.draw();
     });
 }
 BeerMe.prototype = {
     draw:function(e) {
         var o = window.orientation;
-        console.log('Orientation is: ' + o + ', width: ' + screen.availWidth + ', height: ' + screen.availHeight);
-        console.log('lat ' + this.position.lat + ', lng: ' + this.position.lng);
         
         // size map 
         x$('#map').css({
@@ -87,7 +84,7 @@ BeerMe.prototype = {
         // draw map
         this.LatLng = new google.maps.LatLng(this.position.lat, this.position.lng);
         var myOptions = {
-            zoom: 10,
+            zoom: 14,
             center: this.LatLng,
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             mapTypeControl:false,
@@ -119,7 +116,7 @@ BeerMe.prototype = {
         var itemP = new google.maps.LatLng(item.lat, item.lng),
             b = this.map.getBounds();
         
-        // first check if it is worth showing item in the current window.
+        // check if it is worth showing item in the current window.
         if (b.contains(itemP)) {
             var marker = new google.maps.Marker({
                 map:this.map,
